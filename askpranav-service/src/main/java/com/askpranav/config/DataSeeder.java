@@ -74,6 +74,8 @@ public class DataSeeder implements CommandLineRunner {
     private void seedPersonal() {
         if (personalRepository.count() > 0) return;
         Personal personal = new Personal();
+        // Date of birth and email are deliberately NOT seeded: this repo is public. Add them locally
+        // through the Personal CRUD endpoint if you want getContactInfo() to return them.
         personal.setDob(null);
         personal.setHobbies("Competitive Swimming");
         // English/German proficiency levels are from the resume's LANGUAGES section; Hindi/Marathi
