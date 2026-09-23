@@ -9,24 +9,28 @@ Demonstrates, in Java/Spring rather than Python:
 - **RAG** (ingestion → retrieval → generation) over real career content, stored in **pgvector**
 - **Model-agnostic LLM integration** via Spring AI's `ChatClient` - swap OpenAI/Anthropic/Gemini by config, not code
 - **Prompt-engineered guardrails** - answers are grounded-only, refuse to fabricate, decline off-topic questions
-- **Agentic tool/function calling** - `matchJobDescription`, `getProjectDetails`, `getContactInfo`, and more
+- **Agentic tool/function calling** - `matchJobDescription`, `getProjectDetails`, `getPublications`, `getContactInfo`, and more
 - **An MCP server** - the same tools are queryable directly from Claude Desktop / Claude Code
 - **Multi-agent orchestration** - a hand-rolled Planner → Retriever/ToolCaller → Writer pipeline (see caveat below)
 
 ## Before you run this
 
-Two things carried over from the source repo that need your attention, not silent trust:
+One thing carried over from the source repo that needs your attention, not silent trust:
 
 1. **Rotate the exposed RDS password.** The original `Biography-service` repo has a live AWS RDS
    MySQL password committed in plaintext in its history. It was **not** copied into this repo (see
    `askpranav-service/src/main/resources/application.yml`, which uses env vars only) - but if that
    password is still live, rotate it.
-2. **Replace the placeholder Project data.** There was no "Projects" concept in the source repo, so
-   `DataSeeder` seeds one clearly-marked placeholder row. `getProjectDetails` and
-   `matchJobDescription` will report placeholder text until you replace it via
-   `POST /project/save-project` or edit `DataSeeder.java` directly. Likewise,
-   `askpranav-service/src/main/resources/knowledge/resume.md` is a TODO stub - drop your real resume
-   text in there for richer narrative retrieval.
+
+`DataSeeder` now seeds real data (`Experience`, `Skills`, `Certifications`, `Summary`, `Project`,
+`Publication`) sourced from the resume in `knowledge/`, and `KnowledgeFolderLoader` ingests every
+file dropped into `askpranav-service/src/main/resources/knowledge/` (`.md`/`.txt` verbatim,
+`.docx`/`.pdf`/`.pptx`/etc. via Apache Tika) - no more hardcoded filename list. Drop an updated
+resume or a new write-up in there and restart (`ASKPRANAV_INGESTION_MODE=always` while iterating)
+to re-ingest it. Resume files (`.docx`/`.pdf`/`.pptx`) in that folder are git-ignored on purpose, since they
+carry contact details - add your own locally and the app reads it at runtime. One still-open item: the seeded `Project` row's `techStack` carries two `[TBD]`
+placeholders (web scraping framework, vector DB) straight from the resume text - fill those in via
+`POST /project/save-project` or by editing `DataSeeder.java` once decided.
 
 ## Repo layout
 
@@ -46,7 +50,7 @@ recruiter / hiring manager
         │
         └── MCP client (Claude Desktop/Code) ───► same BiographyTools, exposed as MCP tools directly
 
-KnowledgeBaseIngestionRunner (startup) ── reads JPA entities + knowledge/*.md + GitHub READMEs
+KnowledgeBaseIngestionRunner (startup) ── reads JPA entities + knowledge/* (any file type, via Tika) + GitHub READMEs
                                         ── chunks + embeds ──► pgvector (VectorStore)
 ```
 
@@ -60,9 +64,12 @@ reimplementing tool-calling itself.
 ## Prerequisites
 
 - Java 17 (`java -version`)
-- Docker (for local Postgres+pgvector) - **not currently installed on this machine**, install Docker
-  Desktop or point `DB_HOST`/`DB_PORT` at an existing Postgres+pgvector instance instead
-- An API key for at least one of: OpenAI, Anthropic, Google Gemini (Vertex AI)
+- Docker (for local Postgres+pgvector). On Windows, Docker Desktop needs WSL2, which needs CPU
+  virtualization enabled and a full restart (not shut down) after `wsl --install`. Or point
+  `DB_HOST`/`DB_PORT` at an existing Postgres+pgvector instance instead. If a native Postgres already
+  owns port 5432, set `DB_PORT=5433` - the compose file honors it.
+- A Gemini API key (Google AI Studio), or an Anthropic/OpenAI key. Free-tier Gemini keys allow only a few
+  requests per minute per model, and one question makes several model calls, so expect 429s under load.
 
 ## Environment variables
 
@@ -70,10 +77,11 @@ reimplementing tool-calling itself.
 |---|---|---|
 | `DB_USERNAME`, `DB_PASSWORD` | yes | Postgres credentials |
 | `DB_HOST`, `DB_PORT`, `DB_NAME` | no (sensible defaults) | Postgres connection details |
-| `ASKPRANAV_AI_PROVIDER` | no (`anthropic` default) | `openai` \| `anthropic` \| `gemini` |
-| `ANTHROPIC_API_KEY` | if using Anthropic | |
+| `ASKPRANAV_AI_PROVIDER` | no (`anthropic` default) | `openai` \| `anthropic` \| `google-genai` (Gemini via a plain API key) |
+| `GEMINI_API_KEY` | if using Gemini | Drives chat and embeddings through Spring AI's native Google GenAI client |
+| `ANTHROPIC_API_KEY` | if using Anthropic chat | Anthropic has no embedding model, so embeddings still come from Gemini or OpenAI (`ASKPRANAV_EMBEDDING_STARTER`) |
 | `OPENAI_API_KEY` | if using OpenAI | |
-| `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | if using Gemini | Vertex AI project/region |
+| `EMBEDDING_DIMENSIONS` | no (`768` default) | Must match the embedding model (768 for `gemini-embedding-001` as configured) |
 | `ASKPRANAV_ANTHROPIC_MODEL` | no (`claude-sonnet-5` default) | swap Claude model without a code change |
 | `ASKPRANAV_GITHUB_REPOS` | no | comma-separated `owner/repo` slugs whose READMEs to ingest |
 | `ASKPRANAV_INGESTION_MODE` | no (`if-empty` default) | `if-empty` \| `always` |
@@ -83,9 +91,9 @@ Never commit a `.env` file with real values - `.gitignore` already excludes it.
 ## Running locally
 
 ```bash
-docker-compose up -d postgres
-export DB_USERNAME=askpranav DB_PASSWORD=changeme
-export ANTHROPIC_API_KEY=sk-ant-...
+cp .env.example .env        # then fill in DB_PASSWORD and GEMINI_API_KEY
+docker compose up -d postgres
+# load .env into your shell (bash): set -a; source .env; set +a
 cd askpranav-service
 ./mvnw spring-boot:run
 ```
@@ -125,12 +133,15 @@ Unit tests cover document-mapping and tool DTO logic with mocks - no real databa
 LLM call required. Anything that needs a live model (`/ask/question` end to end) is a manual smoke
 test since it spends your API budget.
 
-## Versions flagged for verification
+## Version notes
 
-Several dependency versions in `askpranav-service/pom.xml` are placeholders pending confirmation
-against current Maven Central / spring.io releases at build time: `spring-boot-starter-parent`,
-`spring-ai-bom`, and which Gemini starter artifact id is current
-(`spring-ai-starter-model-vertex-ai-gemini` vs `spring-ai-starter-model-google-genai`). Several
-Spring AI API call shapes (`SearchRequest.builder()`, `ChatClient...entity(Class)`,
-`MethodToolCallbackProvider`) are also marked `VERIFY` in code comments where they appear - they
-reflect the documented 1.0 GA shape but should be checked against whatever version actually resolves.
+- **Spring AI 1.1.8 on Spring Boot 3.5.15**, chosen deliberately. Spring AI 1.0.x's OpenAI client cannot
+  round-trip the `thought_signature` that Gemini 3 models require on tool calls, so tool-calling
+  questions failed with HTTP 400 through Gemini's OpenAI-compatibility endpoint. The native
+  `spring-ai-starter-model-google-genai` client in 1.1.x handles it. Spring AI 2.0.x needs Spring Boot 4,
+  which is a much larger migration.
+- `application.yml` sets `spring.ai.model.*` selectors (chat, embedding, and `none` for image/audio/
+  moderation). Without them, every starter on the classpath builds its own model at startup and any one
+  missing an API key crashes the whole app.
+- Google retires Gemini models quickly (2.x models were already refused for new keys in 2026). If chat
+  starts returning 404 "no longer available", change `ASKPRANAV_GEMINI_MODEL` - no code change needed.

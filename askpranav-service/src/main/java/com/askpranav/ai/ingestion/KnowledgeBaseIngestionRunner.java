@@ -4,6 +4,7 @@ import com.askpranav.repository.CertificationRepository;
 import com.askpranav.repository.EducationRepository;
 import com.askpranav.repository.ExperienceRepository;
 import com.askpranav.repository.ProjectRepository;
+import com.askpranav.repository.PublicationRepository;
 import com.askpranav.repository.SkillRepository;
 import com.askpranav.repository.SummaryRepository;
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ import java.util.List;
 
 /**
  * The "ingestion" step of the RAG pipeline. Runs once at startup: pulls every structured bio/project
- * row plus any markdown/GitHub-README content, chunks it, and upserts it into the pgvector-backed
+ * row plus any knowledge/-folder and GitHub-README content, chunks it, and upserts it into the pgvector-backed
  * VectorStore that {@link com.askpranav.ai.rag.RagQuestionService} and
  * {@link com.askpranav.ai.tools.BiographyTools#matchJobDescription} both query.
  *
@@ -42,8 +43,9 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
     private final SkillRepository skillRepository;
     private final CertificationRepository certificationRepository;
     private final ProjectRepository projectRepository;
+    private final PublicationRepository publicationRepository;
     private final BiographyDocumentMapper documentMapper;
-    private final MarkdownKnowledgeLoader markdownKnowledgeLoader;
+    private final KnowledgeFolderLoader knowledgeFolderLoader;
     private final GithubReadmeFetcher githubReadmeFetcher;
     private final VectorStore vectorStore;
     private final String ingestionMode;
@@ -54,8 +56,9 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
                                          SkillRepository skillRepository,
                                          CertificationRepository certificationRepository,
                                          ProjectRepository projectRepository,
+                                         PublicationRepository publicationRepository,
                                          BiographyDocumentMapper documentMapper,
-                                         MarkdownKnowledgeLoader markdownKnowledgeLoader,
+                                         KnowledgeFolderLoader knowledgeFolderLoader,
                                          GithubReadmeFetcher githubReadmeFetcher,
                                          VectorStore vectorStore,
                                          @Value("${askpranav.ingestion.mode:if-empty}") String ingestionMode) {
@@ -65,8 +68,9 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
         this.skillRepository = skillRepository;
         this.certificationRepository = certificationRepository;
         this.projectRepository = projectRepository;
+        this.publicationRepository = publicationRepository;
         this.documentMapper = documentMapper;
-        this.markdownKnowledgeLoader = markdownKnowledgeLoader;
+        this.knowledgeFolderLoader = knowledgeFolderLoader;
         this.githubReadmeFetcher = githubReadmeFetcher;
         this.vectorStore = vectorStore;
         this.ingestionMode = ingestionMode;
@@ -86,8 +90,9 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
                 educationRepository.findAll(),
                 skillRepository.findAll(),
                 certificationRepository.findAll(),
-                projectRepository.findAll()));
-        documents.addAll(markdownKnowledgeLoader.loadAll());
+                projectRepository.findAll(),
+                publicationRepository.findAll()));
+        documents.addAll(knowledgeFolderLoader.loadAll());
         documents.addAll(githubReadmeFetcher.fetchAll());
 
         if (documents.isEmpty()) {

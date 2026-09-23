@@ -19,11 +19,31 @@ spring:
         format_sql: true
 
   ai:
+    model:
+      # Which auto-configured starter backs each capability. Without this, every starter on the classpath
+      # (OpenAI, Anthropic, Google GenAI) tries to build its own model bean at startup, and any with an
+      # empty key fails the whole app - and PgVectorStore would see several EmbeddingModel beans.
+      # Chat follows askpranav.ai.provider, so its values are the selector names: openai | anthropic |
+      # google-genai. Anthropic has no embedding model, so embeddings are selected separately.
+      embedding: ${ASKPRANAV_EMBEDDING_STARTER:google-genai}
+      chat: ${ASKPRANAV_AI_PROVIDER:anthropic}
+      # The OpenAI starter also auto-creates image/audio/moderation models, and each one demands an API key
+      # at startup even though this app never uses them. "none" matches no starter, so they're not built.
+      image: none
+      audio:
+        transcription: none
+        speech: none
+      moderation: none
+
     openai:
       api-key: ${OPENAI_API_KEY:}
       chat:
         options:
           model: ${ASKPRANAV_OPENAI_MODEL:gpt-4o-mini}
+      embedding:
+        options:
+          model: ${ASKPRANAV_OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+          dimensions: ${EMBEDDING_DIMENSIONS:768}
 
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:}
@@ -33,20 +53,28 @@ spring:
           # newly released models. Swap via env var - that's the point of the model-agnostic layer.
           model: ${ASKPRANAV_ANTHROPIC_MODEL:claude-sonnet-5}
 
-    vertex:
-      ai:
-        gemini:
-          project-id: ${GOOGLE_CLOUD_PROJECT:}
-          location: ${GOOGLE_CLOUD_LOCATION:us-central1}
-          chat:
+    google:
+      genai:
+        # Native Google GenAI client with a plain Gemini API key (Google AI Studio) - no GCP project.
+        # Unlike the OpenAI-compatibility endpoint, it round-trips Gemini 3's thought_signature on tool calls.
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: ${ASKPRANAV_GEMINI_MODEL:gemini-3.6-flash}
+        embedding:
+          api-key: ${GEMINI_API_KEY:}
+          text:
             options:
-              model: ${ASKPRANAV_GEMINI_MODEL:gemini-1.5-pro}
+              model: ${ASKPRANAV_GEMINI_EMBEDDING_MODEL:gemini-embedding-001}
+              dimensions: ${EMBEDDING_DIMENSIONS:768}
 
     vectorstore:
       pgvector:
         index-type: HNSW
         distance-type: COSINE_DISTANCE
-        dimensions: ${EMBEDDING_DIMENSIONS:1536}
+        # Must equal the embedding model's output size (same env var feeds both). pgvector's HNSW index
+        # caps at 2000 dims, so 3072-dim models need a reduced `dimensions` here.
+        dimensions: ${EMBEDDING_DIMENSIONS:768}
         initialize-schema: true
 
     mcp:
@@ -58,7 +86,7 @@ spring:
 # --- AskPranav application config ---
 askpranav:
   ai:
-    # Which Spring AI ChatModel bean to route to: openai | anthropic | gemini
+    # Which Spring AI ChatModel bean to route to: openai | anthropic | google-genai
     provider: ${ASKPRANAV_AI_PROVIDER:anthropic}
   ingestion:
     # always: re-embed every startup (dev). if-empty: only embed if the vector store looks empty (default).

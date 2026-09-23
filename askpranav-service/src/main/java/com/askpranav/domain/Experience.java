@@ -37,6 +37,6 @@ public class Experience {
     @Column(name = "YEAR")
     private String year;
 
-    @Column(name = "DESCRIPTION", length = 1000)
+    @Column(name = "DESCRIPTION", length = 2000)
     private String description;
 }

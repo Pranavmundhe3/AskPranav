@@ -2,6 +2,12 @@
 .env
 *.env.local
 
+### Personal documents (contain phone number/contact details - keep local, ingested at runtime only) ###
+askpranav-service/src/main/resources/knowledge/*.docx
+askpranav-service/src/main/resources/knowledge/*.doc
+askpranav-service/src/main/resources/knowledge/*.pdf
+askpranav-service/src/main/resources/knowledge/*.pptx
+
 ### Maven ###
 target/
 !.mvn/wrapper/maven-wrapper.jar

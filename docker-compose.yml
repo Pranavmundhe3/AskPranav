@@ -8,7 +8,8 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-askpranav}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in your .env file}
     ports:
-      - "5432:5432"
+      # Host port is configurable so it doesn't collide with a natively installed Postgres on 5432.
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - askpranav-pgdata:/var/lib/postgresql/data
 

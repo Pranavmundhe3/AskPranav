@@ -29,6 +29,9 @@ public class Project {
     @Column(name = "NAME")
     private String name;
 
+    @Column(name = "DURATION")
+    private String duration;
+
     @Column(name = "SHORT_DESCRIPTION", length = 500)
     private String shortDescription;
 

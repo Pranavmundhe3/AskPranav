@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<!-- VERIFY: pin to the latest stable 3.3.x/3.4.x release at build time -->
-		<version>3.3.5</version>
+		<!-- Spring AI 1.1.x is built against Boot 3.5.x (its published poms pin 3.5.15) -->
+		<version>3.5.15</version>
 		<relativePath/>
 	</parent>
 	<groupId>com.askpranav</groupId>
@@ -16,8 +16,9 @@
 	<description>AskPranav - an AI career agent over Pranav's real resume, project, and README data</description>
 	<properties>
 		<java.version>17</java.version>
-		<!-- VERIFY: pin to the current Spring AI 1.0.x/1.1.x GA release at build time -->
-		<spring-ai.version>1.0.0</spring-ai.version>
+		<!-- 1.1.x, not 1.0.x: 1.0's OpenAI client can't round-trip Gemini 3's thought_signature on tool
+		     calls. Not 2.0.x: that line requires Spring Boot 4. -->
+		<spring-ai.version>1.1.8</spring-ai.version>
 	</properties>
 
 	<dependencyManagement>
@@ -57,15 +58,26 @@
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-anthropic</artifactId>
 		</dependency>
+		<!-- Gemini via a plain API key (Google AI Studio) - the native client, not the OpenAI-compat shim -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-vertex-ai-gemini</artifactId>
+			<artifactId>spring-ai-starter-model-google-genai</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-starter-model-google-genai-embedding</artifactId>
 		</dependency>
 
 		<!-- RAG vector store -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+		</dependency>
+
+		<!-- Tika document reader: lets the knowledge/ folder ingest .docx/.pdf/.pptx, not just .md/.txt -->
+		<dependency>
+			<groupId>org.springframework.ai</groupId>
+			<artifactId>spring-ai-tika-document-reader</artifactId>
 		</dependency>
 
 		<!-- MCP server: exposes BiographyTools to Claude Desktop / Claude Code / any MCP client -->

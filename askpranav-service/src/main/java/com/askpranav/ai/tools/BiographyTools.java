@@ -6,14 +6,17 @@ import com.askpranav.ai.tools.dto.EducationDto;
 import com.askpranav.ai.tools.dto.ExperienceDto;
 import com.askpranav.ai.tools.dto.JobMatchEvidenceDto;
 import com.askpranav.ai.tools.dto.ProjectDto;
+import com.askpranav.ai.tools.dto.PublicationDto;
 import com.askpranav.ai.tools.dto.SkillDto;
 import com.askpranav.domain.Personal;
 import com.askpranav.domain.Project;
+import com.askpranav.domain.Publication;
 import com.askpranav.service.CertificationService;
 import com.askpranav.service.EducationService;
 import com.askpranav.service.ExperienceService;
 import com.askpranav.service.PersonalService;
 import com.askpranav.service.ProjectService;
+import com.askpranav.service.PublicationService;
 import com.askpranav.service.SkillService;
 import com.askpranav.service.SummaryService;
 import org.springframework.ai.document.Document;
@@ -51,6 +54,8 @@ public class BiographyTools {
     private SummaryService summaryService;
     @Autowired
     private ProjectService projectService;
+    @Autowired
+    private PublicationService publicationService;
     @Autowired
     private VectorStore vectorStore;
 
@@ -101,8 +106,15 @@ public class BiographyTools {
             @ToolParam(description = "Project name, or a partial/fuzzy match of it")
             String name) {
         Optional<Project> project = projectService.getProjectByName(name);
-        return project.map(p -> new ProjectDto(p.getName(), p.getShortDescription(), p.getTechStack(), p.getGithubUrl(), p.getLiveUrl(), p.getReadmeExcerpt()))
+        return project.map(p -> new ProjectDto(p.getName(), p.getDuration(), p.getShortDescription(), p.getTechStack(), p.getGithubUrl(), p.getLiveUrl(), p.getReadmeExcerpt()))
                 .orElse(null);
+    }
+
+    @Tool(description = "List Pranav's published work - journal/conference papers - as opposed to personal engineering projects.")
+    public List<PublicationDto> getPublications() {
+        return publicationService.getPublicationDetails().stream()
+                .map(p -> new PublicationDto(p.getTitle(), p.getPublishedOn(), p.getVenue(), p.getDescription(), p.getTechnologies(), p.getUrl()))
+                .toList();
     }
 
     @Tool(description = "Get Pranav's contact information: email, LinkedIn, GitHub, and portfolio links.")

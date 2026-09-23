@@ -4,6 +4,7 @@ import com.askpranav.domain.Certifications;
 import com.askpranav.domain.Education;
 import com.askpranav.domain.Experience;
 import com.askpranav.domain.Project;
+import com.askpranav.domain.Publication;
 import com.askpranav.domain.Skills;
 import com.askpranav.domain.Summary;
 import org.springframework.ai.document.Document;
@@ -71,8 +72,9 @@ public class BiographyDocumentMapper {
     }
 
     public Document map(Project project) {
-        String text = "Project: %s. %s Tech stack: %s. %s".formatted(
+        String text = "Project: %s%s. %s Tech stack: %s. %s".formatted(
                 project.getName(),
+                project.getDuration() != null && !project.getDuration().isBlank() ? " (" + project.getDuration() + ")" : "",
                 project.getShortDescription() != null ? project.getShortDescription() : "",
                 project.getTechStack() != null ? project.getTechStack() : "",
                 project.getReadmeExcerpt() != null ? project.getReadmeExcerpt() : "");
@@ -83,15 +85,31 @@ public class BiographyDocumentMapper {
                 .build();
     }
 
+    public Document map(Publication publication) {
+        String text = "Publication: %s (%s), published in %s. %s Technologies: %s".formatted(
+                publication.getTitle(),
+                publication.getPublishedOn(),
+                publication.getVenue(),
+                publication.getDescription() != null ? publication.getDescription() : "",
+                publication.getTechnologies() != null ? publication.getTechnologies() : "");
+        return Document.builder()
+                .text(text)
+                .metadata(Map.of("source", "jpa-entity", "entityType", "publication", "entityId", publication.getId(),
+                        "label", publication.getTitle()))
+                .build();
+    }
+
     public List<Document> mapAll(List<Summary> summaries, List<Experience> experiences, List<Education> educations,
-                                  List<Skills> skills, List<Certifications> certifications, List<Project> projects) {
+                                  List<Skills> skills, List<Certifications> certifications, List<Project> projects,
+                                  List<Publication> publications) {
         return java.util.stream.Stream.of(
                         summaries.stream().map(this::map),
                         experiences.stream().map(this::map),
                         educations.stream().map(this::map),
                         skills.stream().map(this::map),
                         certifications.stream().map(this::map),
-                        projects.stream().map(this::map))
+                        projects.stream().map(this::map),
+                        publications.stream().map(this::map))
                 .flatMap(s -> s)
                 .toList();
     }
