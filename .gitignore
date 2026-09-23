@@ -1,0 +1,28 @@
+### Secrets ###
+.env
+*.env.local
+
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### Java IDEs ###
+HELP.md
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+.idea
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+### Node / Angular ###
+resume-client/node_modules/
+resume-client/dist/
+resume-client/.angular/
+npm-debug.log

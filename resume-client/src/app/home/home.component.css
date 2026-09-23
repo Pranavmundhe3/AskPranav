@@ -1,0 +1,38 @@
+.center{
+    margin: auto;
+    width: 80%;
+    padding: 10px;
+}
+
+img {
+    height: 150px;
+    circle: 100px;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.card {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    text-align: center;
+    background-color: #f1f1f1;
+}
+
+.example-label {
+    display: table-cell;
+    font-size: 14px;
+    margin-left: 8px;
+    min-width: 120px;
+  }
+  
+  .example-button-row {
+    display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  }
+  
+  .example-button-row .mat-mdc-button-base {
+    margin: 8px 8px 8px 0;
+  }
+  

@@ -1,0 +1,67 @@
+
+<div class="center">
+  <div class="card">
+    <section class="w3-container w3-center w3-content" style="max-width:3000px">
+      <mat-icon class="pos">shopping_bag</mat-icon>
+      <p>Following Are My Skills. Click The Panel For More Details</p>
+
+
+      <mat-expansion-panel (opened)="getSkillsByTech()" (closed)="panelOpenStateTech = false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Technologies
+          </mat-panel-title>
+          <mat-panel-description>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <p class="pos">{{tecSkillDetails.name}}</p>
+      </mat-expansion-panel>
+
+      
+      <br> 
+      <mat-expansion-panel (opened)="getSkillsByFramework()" (closed)="panelOpenStateFrame = false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Frameworks
+          </mat-panel-title>
+          <mat-panel-description>
+           
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <p class="pos"> {{frameSkillDetails.name}}</p>
+      </mat-expansion-panel>
+      <br>
+
+
+
+      <mat-expansion-panel (opened)="getSkillsByTools()" (closed)="panelOpenStateTool = false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Tools
+          </mat-panel-title>
+          <mat-panel-description>
+            
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <p class="pos">{{toolSkillDetails.name}}</p>
+      </mat-expansion-panel>
+      <br>
+
+
+
+
+      <mat-expansion-panel (opened)="getSkillsByOthers()" (closed)="panelOpenStateOther = false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Others
+          </mat-panel-title>
+          <mat-panel-description>
+            
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <p class="pos">{{otherSkillDetails.name}}</p>
+      </mat-expansion-panel>
+
+    </section>
+  </div>
+</div>

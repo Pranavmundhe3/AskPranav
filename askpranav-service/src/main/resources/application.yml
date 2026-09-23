@@ -1,0 +1,68 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: askpranav-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:askpranav}
+    username: ${DB_USERNAME:askpranav}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${ASKPRANAV_OPENAI_MODEL:gpt-4o-mini}
+
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      chat:
+        options:
+          # Set explicitly rather than relying on the starter's baked-in default, which can lag behind
+          # newly released models. Swap via env var - that's the point of the model-agnostic layer.
+          model: ${ASKPRANAV_ANTHROPIC_MODEL:claude-sonnet-5}
+
+    vertex:
+      ai:
+        gemini:
+          project-id: ${GOOGLE_CLOUD_PROJECT:}
+          location: ${GOOGLE_CLOUD_LOCATION:us-central1}
+          chat:
+            options:
+              model: ${ASKPRANAV_GEMINI_MODEL:gemini-1.5-pro}
+
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: ${EMBEDDING_DIMENSIONS:1536}
+        initialize-schema: true
+
+    mcp:
+      server:
+        name: askpranav-mcp-server
+        version: 0.0.1
+        type: SYNC
+
+# --- AskPranav application config ---
+askpranav:
+  ai:
+    # Which Spring AI ChatModel bean to route to: openai | anthropic | gemini
+    provider: ${ASKPRANAV_AI_PROVIDER:anthropic}
+  ingestion:
+    # always: re-embed every startup (dev). if-empty: only embed if the vector store looks empty (default).
+    mode: ${ASKPRANAV_INGESTION_MODE:if-empty}
+  knowledge:
+    # owner/repo slugs whose README.md should be ingested into the vector store, e.g. "Pranavmundhe3/AskPranav"
+    github-repos: ${ASKPRANAV_GITHUB_REPOS:}

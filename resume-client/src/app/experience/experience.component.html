@@ -1,0 +1,27 @@
+<div class="center">
+    <div class="card">
+      <section class="w3-container w3-center w3-content" style="max-width:3000px">
+        <mat-icon class="pos">work</mat-icon>
+        <h2 class="pos">Work Profile</h2>
+        <h3 class="pos">{{expDetails.position}}</h3>
+        <h4 class="pos">{{expDetails.location}}</h4>
+        <p class="pos">{{expDetails.company}} - {{expDetails.client}}</p>
+        <p class="pos">{{expDetails.year}}</p>
+        <p class="pos">Description : </p>
+        <p class="pos">{{expDetails.description}}</p>
+      </section>
+    </div>
+</div>
+
+<div class="center">
+  <div class="card">
+    <section class="w3-container w3-center w3-content" style="max-width:3000px">
+      <mat-icon class="pos">analytics</mat-icon>
+      <h2 class="pos">Certifications</h2>
+      <li *ngFor="let item of certDetails;">
+        <p class="pos">{{item.name}}</p>
+        <p class="pos">{{item.completedOn}}</p>
+     </li>
+    </section>
+  </div>
+</div>

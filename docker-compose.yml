@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: askpranav-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-askpranav}
+      POSTGRES_USER: ${DB_USERNAME:-askpranav}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in your .env file}
+    ports:
+      - "5432:5432"
+    volumes:
+      - askpranav-pgdata:/var/lib/postgresql/data
+
+volumes:
+  askpranav-pgdata:
