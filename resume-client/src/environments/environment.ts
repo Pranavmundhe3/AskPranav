@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  // AskPranav backend (askpranav-service). Its CORS setting allows http://localhost:4200 by default.
+  askpranavApiUrl: 'http://localhost:5000'
 };
 
 /*

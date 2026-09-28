@@ -1,0 +1,57 @@
+<div class="ask-page">
+  <div class="ask-card">
+
+    <div class="ask-header">
+      <h2>Ask Pranav</h2>
+      <p>Ask about Pranav's experience, skills, projects and publications. Answers come from his real resume data.</p>
+    </div>
+
+    <div class="ask-log" #log aria-live="polite">
+      <div *ngFor="let m of messages" class="msg"
+           [ngClass]="{ 'msg-user': m.role === 'user', 'msg-bot': m.role === 'bot', 'msg-error': m.error }">
+
+        <div *ngIf="m.loading" class="dots"><span></span><span></span><span></span></div>
+
+        <ng-container *ngIf="!m.loading">
+          <ng-container *ngIf="m.role === 'user'">{{ m.text }}</ng-container>
+
+          <ng-container *ngIf="m.role === 'bot'">
+            <ng-container *ngFor="let b of m.blocks">
+              <p *ngIf="!b.list">
+                <span *ngFor="let s of b.lines[0]" [class.bold]="s.bold">{{ s.text }}</span>
+              </p>
+              <ul *ngIf="b.list">
+                <li *ngFor="let line of b.lines">
+                  <span *ngFor="let s of line" [class.bold]="s.bold">{{ s.text }}</span>
+                </li>
+              </ul>
+            </ng-container>
+
+            <details *ngIf="m.sources.length > 0" class="sources">
+              <summary>Grounded in {{ m.sources.length }} source{{ m.sources.length > 1 ? 's' : '' }}</summary>
+              <ul>
+                <li *ngFor="let s of m.sources"><span class="bold">{{ s.label }}:</span> {{ s.excerpt }}</li>
+              </ul>
+            </details>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <div class="ask-suggestions" *ngIf="messages.length === 1">
+      <button type="button" *ngFor="let s of suggestions" (click)="send(s)" [disabled]="sending">{{ s }}</button>
+    </div>
+
+    <div class="ask-input">
+      <textarea rows="2" maxlength="4000" [(ngModel)]="draft" [disabled]="sending"
+                (keydown.enter)="onEnter($event)"
+                placeholder="e.g. What is his experience with RabbitMQ?" aria-label="Your question"></textarea>
+      <button type="button" class="send" (click)="send()" [disabled]="sending || !draft.trim()">Send</button>
+    </div>
+
+    <p class="ask-note">
+      AI-generated from Pranav's data; it can make mistakes. Limit: 2 questions per 5 minutes.
+      Enter to send, Shift+Enter for a new line.
+    </p>
+  </div>
+</div>

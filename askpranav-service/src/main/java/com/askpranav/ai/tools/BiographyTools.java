@@ -33,7 +33,7 @@ import java.util.Optional;
 /**
  * Every method here is exposed two ways at once: as a Spring AI {@code @Tool} the ChatClient can
  * call mid-conversation, AND (via {@link com.askpranav.ai.config.McpToolConfig}) as an MCP tool any
- * MCP client - Claude Desktop, Claude Code, anything speaking the protocol - can call directly.
+ * MCP client - anything speaking the protocol - can call directly.
  * Methods return DTOs, never raw JPA entities, so the LLM/MCP boundary never leaks persistence
  * details and never lets a tool call accidentally trigger lazy-loading.
  */

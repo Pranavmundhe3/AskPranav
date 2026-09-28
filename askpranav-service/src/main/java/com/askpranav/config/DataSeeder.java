@@ -175,7 +175,7 @@ public class DataSeeder implements CommandLineRunner {
         skillRepository.save(new Skills(null, "Angular, TypeScript, HTML5, CSS3", "Frontend"));
         skillRepository.save(new Skills(null, "Agile, Scrum, SAFe, Technical Leadership", "Process & Leadership"));
         skillRepository.save(new Skills(null,
-                "AI Assisted Development, Claude Code, Prompt Engineering, RAG", "AI-Assisted Development"));
+                "AI Assisted Development, AI Coding Agents, Prompt Engineering, RAG", "AI-Assisted Development"));
         log.info("Seeded Skills (8 categories)");
     }
 
@@ -210,13 +210,13 @@ public class DataSeeder implements CommandLineRunner {
         project.setName("AI-Powered Job Search Agent");
         project.setDuration("2026 - Present");
         project.setShortDescription(
-                "Built an autonomous job-search agent in Python using Claude Code as the development agent, "
-                        + "automating discovery and ranking of job postings from job boards, with a RAG-based "
-                        + "pipeline scoring job-fit via prompt-engineered Claude API calls.");
+                "Built an autonomous job-search agent in Python using an AI coding agent as the development "
+                        + "agent, automating discovery and ranking of job postings from job boards, with a "
+                        + "RAG-based pipeline scoring job-fit via prompt-engineered LLM API calls.");
         // The resume itself leaves the scraping framework and vector DB as unfilled placeholders -
         // carried over verbatim rather than guessed; fill these in (or via POST /project/save-project)
         // once decided.
-        project.setTechStack("Python, Claude Code, Anthropic API, RAG, Prompt Engineering, "
+        project.setTechStack("Python, AI coding agent, LLM API, RAG, Prompt Engineering, "
                 + "[web scraping framework - TBD], [vector DB - TBD]");
         project.setGithubUrl(null);
         project.setLiveUrl(null);

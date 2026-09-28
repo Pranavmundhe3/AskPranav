@@ -26,7 +26,7 @@ spring:
     google:
       genai:
         # Native Google GenAI client with a plain Gemini API key (Google AI Studio) - no GCP project.
-        # It round-trips Gemini 3's thought_signature on tool calls, which OpenAI-compatible clients drop.
+        # It round-trips Gemini 3's thought_signature on tool calls, which generic compatibility clients drop.
         api-key: ${GEMINI_API_KEY:}
         chat:
           options:

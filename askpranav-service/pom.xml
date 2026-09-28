@@ -71,7 +71,7 @@
 			<artifactId>spring-ai-tika-document-reader</artifactId>
 		</dependency>
 
-		<!-- MCP server: exposes BiographyTools to Claude Desktop / Claude Code / any MCP client -->
+		<!-- MCP server: exposes BiographyTools to any MCP client -->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
