@@ -115,11 +115,29 @@ are unchanged in shape from the source repo and still work the same way.
 
 ### Connecting an MCP client
 
-With the app running, point Claude Desktop or Claude Code's MCP configuration at the running MCP
-server (transport/URL depend on the Spring AI MCP server version pinned in `pom.xml` - check
-`spring.ai.mcp.server` properties in `application.yml`). Once connected, ask your own assistant
-things like "using the AskPranav tools, what are Pranav's certifications?" - it calls
-`getCertifications()` directly, no HTTP client code needed on your end.
+With the app running, the MCP server speaks **SSE** (Spring AI's default transport) at
+`http://localhost:5000/sse`, with messages posted to `/mcp/message`. There is no `/mcp` Streamable
+HTTP endpoint. It exposes 9 tools: `getCareerSummary`, `getExperience`, `getSkills`, `getEducation`,
+`getCertifications`, `getPublications`, `getProjectDetails`, `getContactInfo`, `matchJobDescription`.
+
+Claude Code:
+
+```bash
+claude mcp add --transport sse askpranav http://localhost:5000/sse
+```
+
+Claude Desktop (`claude_desktop_config.json`, via the `mcp-remote` bridge since Desktop launches
+stdio servers):
+
+```json
+{ "mcpServers": { "askpranav": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:5000/sse"] } } }
+```
+
+Then ask your assistant things like "using the AskPranav tools, what are Pranav's certifications?" or
+paste a job description and ask it to run `matchJobDescription`. The handshake, tool listing,
+`getCertifications` and `matchJobDescription` were verified against a running instance over raw
+JSON-RPC; the Claude Desktop snippet has not been tried yet. The endpoint is unauthenticated, so
+only expose it beyond localhost behind something that adds auth.
 
 ## Build & test (no API cost)
 

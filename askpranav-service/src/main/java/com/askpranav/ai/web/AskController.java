@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * The single AI-facing HTTP entry point. Routes every question through the Planner -> Retriever/
  * ToolCaller -> Writer pipeline in {@link OrchestrationService}. The same capabilities are also
@@ -35,7 +37,16 @@ public class AskController {
             return ResponseEntity.badRequest().build();
         }
         log.info("AskPranav question received");
-        AnswerResponse response = orchestrationService.answer(request.question());
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        try {
+            return new ResponseEntity<>(orchestrationService.answer(request.question()), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            // Provider-side failures (rate limits, overload) surface as RuntimeExceptions from the model
+            // client; report them as a temporary outage rather than an opaque 500.
+            log.warn("Model call failed: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new AnswerResponse(
+                            "The language model is temporarily unavailable or rate limited. Please try again shortly.",
+                            List.of(), "ERROR"));
+        }
     }
 }
