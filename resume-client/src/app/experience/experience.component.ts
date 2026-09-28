@@ -10,8 +10,9 @@ import { BiographyServiceService } from './../biography-service.service';
 })
 export class ExperienceComponent implements OnInit {
 
-  expDetails: Experience;
-  certDetails: Certification[];
+  expDetails: Experience[] = [];
+  certDetails: Certification[] = [];
+  error = false;
 
   constructor(private biographyServiceService: BiographyServiceService) { }
 
@@ -20,19 +21,22 @@ export class ExperienceComponent implements OnInit {
     this.getCertDetails();
   }
 
+  /** The backend stores one bullet point per line; blank lines are ignored. */
+  bulletsOf(description: string): string[] {
+    return (description || '').split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  }
+
   getExpDetails() {
     this.biographyServiceService.getExperienceDetails().subscribe(
-      (data) => {
-      this.expDetails = data;
-      console.log(this.expDetails);
-    });
+      (data) => this.expDetails = data,
+      () => this.error = true
+    );
   }
-  
+
   getCertDetails() {
     this.biographyServiceService.getCertificationList().subscribe(
-      (data) => {
-      this.certDetails = data;
-      console.log(this.certDetails);
-    });
+      (data) => this.certDetails = data,
+      () => this.error = true
+    );
   }
 }

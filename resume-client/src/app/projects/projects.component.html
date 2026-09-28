@@ -1,0 +1,18 @@
+<p class="center" *ngIf="error">Could not load projects from the backend.</p>
+
+<div class="center" *ngFor="let project of projects">
+  <div class="card">
+    <section class="w3-container w3-center w3-content" style="max-width:3000px">
+      <mat-icon class="pos">build</mat-icon>
+      <h2 class="pos">{{ project.name }}</h2>
+      <h4 class="pos" *ngIf="project.duration">{{ project.duration }}</h4>
+      <p class="pos">{{ project.shortDescription }}</p>
+      <p class="pos" *ngIf="project.techStack"><strong>Tech stack:</strong> {{ project.techStack }}</p>
+      <p class="pos" *ngIf="project.githubUrl || project.liveUrl">
+        <a *ngIf="project.githubUrl" [href]="project.githubUrl" target="_blank" rel="noopener">GitHub</a>
+        <span *ngIf="project.githubUrl && project.liveUrl"> | </span>
+        <a *ngIf="project.liveUrl" [href]="project.liveUrl" target="_blank" rel="noopener">Live</a>
+      </p>
+    </section>
+  </div>
+</div>

@@ -1,1 +1,37 @@
-<p>Coming up</p>
+<div class="center">
+  <div class="card">
+    <h2 class="title">Get In Touch</h2>
+    <p class="intro">Send me a message and it lands straight in my inbox. I will reply to the address you enter.</p>
+
+    <form #contactForm="ngForm" (ngSubmit)="submit(contactForm)" novalidate>
+
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" [(ngModel)]="model.name" #name="ngModel"
+             required maxlength="100" autocomplete="name">
+      <small class="error" *ngIf="name.invalid && (name.dirty || name.touched)">Please enter your name.</small>
+
+      <label for="email">Your email</label>
+      <input id="email" name="email" type="email" [(ngModel)]="model.email" #email="ngModel"
+             required email maxlength="200" autocomplete="email">
+      <small class="error" *ngIf="email.invalid && (email.dirty || email.touched)">Please enter a valid email address.</small>
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="6" [(ngModel)]="model.message" #message="ngModel"
+                required maxlength="5000"></textarea>
+      <small class="error" *ngIf="message.invalid && (message.dirty || message.touched)">Please write a message.</small>
+
+      <!-- Honeypot: invisible to people; bots that fill every field give themselves away. -->
+      <div class="hp" aria-hidden="true">
+        <label for="website">Leave this empty</label>
+        <input id="website" name="website" type="text" [(ngModel)]="model.website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button type="submit" mat-raised-button color="primary" [disabled]="contactForm.invalid || sending">
+        {{ sending ? 'Sending...' : 'Send message' }}
+      </button>
+
+      <p class="notice success" *ngIf="success" role="status">{{ success }}</p>
+      <p class="notice failure" *ngIf="failure" role="alert">{{ failure }}</p>
+    </form>
+  </div>
+</div>

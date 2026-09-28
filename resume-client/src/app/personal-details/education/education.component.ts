@@ -9,19 +9,19 @@ import { BiographyServiceService } from './../../biography-service.service';
 })
 export class EducationComponent implements OnInit {
 
-  eduDetails: Education;
+  eduDetails: Education[] = [];
+  error = false;
 
   constructor(private biographyServiceService: BiographyServiceService) { }
 
   ngOnInit(): void {
-    this.getPersonal();
+    this.getEducation();
   }
 
-  getPersonal() {
+  getEducation() {
     this.biographyServiceService.getEducationDetails().subscribe(
-      (data) => {
-      this.eduDetails = data;
-      console.log(this.eduDetails);
-    });
+      (data) => this.eduDetails = data,
+      () => this.error = true
+    );
   }
 }

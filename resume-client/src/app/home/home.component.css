@@ -1,14 +1,7 @@
-.center{
+.center {
     margin: auto;
     width: 80%;
     padding: 10px;
-}
-
-img {
-    height: 150px;
-    circle: 100px;
-    overflow: hidden;
-    border-radius: 50%;
 }
 
 .card {
@@ -18,21 +11,118 @@ img {
     background-color: #f1f1f1;
 }
 
-.example-label {
-    display: table-cell;
-    font-size: 14px;
-    margin-left: 8px;
-    min-width: 120px;
-  }
-  
-  .example-button-row {
+.hero {
+    animation: card-in 0.6s ease-out both;
+}
+
+/* Avatar: gentle float with a pulsing ring */
+.avatar {
+    display: inline-block;
+    border-radius: 50%;
+    animation: float 4s ease-in-out infinite, ring 2.6s ease-out infinite;
+}
+
+.avatar img {
+    display: block;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+/* Name: gradient text with a slow shimmer */
+.name {
+    margin: 14px 0 18px;
+    font-size: 26px;
+    background: linear-gradient(90deg, #1976d2, #7b1fa2, #04aa6d, #1976d2);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shimmer 6s linear infinite;
+}
+
+/* Summary: one sentence at a time, sliding up with an accent bar */
+.summary {
+    max-width: 760px;
+    margin: 0 auto 16px;
+    text-align: left;
+}
+
+.line {
+    margin: 0 0 10px;
+    padding: 10px 14px;
+    line-height: 1.6;
+    font-size: 15px;
+    background: #ffffff;
+    border-left: 4px solid #1976d2;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    transform: translateY(18px);
+    animation: line-in 0.7s ease-out forwards;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.line:nth-child(even) {
+    border-left-color: #04aa6d;
+}
+
+.line:hover {
+    transform: translateX(4px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Key terms: a highlighter stroke that draws in after the sentence appears */
+.hl {
+    font-weight: 600;
+    background: linear-gradient(120deg, rgba(25, 118, 210, 0.22), rgba(4, 170, 109, 0.28)) no-repeat 0 90% / 0% 45%;
+    animation: highlight 0.8s ease-out forwards;
+}
+
+.example-button-row {
     display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60px;
-  }
-  
-  .example-button-row .mat-mdc-button-base {
-    margin: 8px 8px 8px 0;
-  }
-  
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    height: 70px;
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes line-in {
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes highlight {
+    to { background-size: 100% 45%; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes ring {
+    0% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.45); }
+    100% { box-shadow: 0 0 0 20px rgba(25, 118, 210, 0); }
+}
+
+@keyframes shimmer {
+    to { background-position: 300% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero, .avatar, .name, .line, .hl {
+        animation: none;
+    }
+    .line { opacity: 1; transform: none; }
+    .hl { background-size: 100% 45%; }
+}
+
+@media (max-width: 520px) {
+    .example-button-row { flex-direction: column; height: auto; gap: 12px; padding: 12px 0; }
+}

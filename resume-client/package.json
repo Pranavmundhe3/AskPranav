@@ -5,6 +5,9 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:watch": "node --openssl-legacy-provider ./node_modules/@angular/cli/bin/ng build --watch",
+    "build:once": "node --openssl-legacy-provider ./node_modules/@angular/cli/bin/ng build",
+    "serve:dist": "node serve-dist.js",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

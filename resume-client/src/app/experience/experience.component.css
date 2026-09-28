@@ -21,3 +21,13 @@ img {
     text-align: center;
     background-color: #f1f1f1;
 }
+.bullets {
+    margin: 4px 0 0;
+    padding-left: 22px;
+    text-align: left;
+}
+
+.bullets li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}

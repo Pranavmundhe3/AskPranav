@@ -22,3 +22,22 @@ img {
     text-align: center;
     background-color: #f1f1f1;
 }
+/* Hobbies shown as pill-shaped tags */
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.chips li {
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #c9d3e3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-weight: 500;
+}

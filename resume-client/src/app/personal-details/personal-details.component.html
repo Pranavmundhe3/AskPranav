@@ -1,28 +1,36 @@
 <app-education></app-education>
-<div class="center">
-  <div class="card">
-    <section class="w3-container w3-center w3-content" style="max-width:3000px">
-    <mat-icon class="pos">swap_vert</mat-icon>
-     <h2 class="pos">Date Of Birth</h2>
-     <p class="pos" >{{personalDetails.dob}}</p>
-    </section>
-  </div>
-</div>
-<div class="center">
+<p class="center" *ngIf="error">Could not load personal details from the backend.</p>
+
+<ng-container *ngIf="personalDetails">
+  <div class="center" *ngIf="hobbies.length > 0">
     <div class="card">
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
         <mat-icon class="pos">redeem</mat-icon>
-       <h2 class="pos" >Hobbies</h2>
-       <p class="pos" >{{personalDetails.hobbies}}</p>
+       <h2 class="pos">Hobbies &amp; Interests</h2>
+       <ul class="chips">
+         <li *ngFor="let hobby of hobbies">{{ hobby }}</li>
+       </ul>
       </section>
     </div>
   </div>
-  <div class="center">
+  <div class="center" *ngIf="personalDetails.languages">
     <div class="card">
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
         <mat-icon class="pos">account_circle</mat-icon>
-       <h2 class="pos" >Languages Known</h2>
-       <p class="pos" >{{personalDetails.languages}}</p>
+       <h2 class="pos">Languages Known</h2>
+       <p class="pos">{{personalDetails.languages}}</p>
       </section>
     </div>
   </div>
+  <div class="center" *ngIf="personalDetails.linkedinUrl || personalDetails.githubUrl || personalDetails.portfolioUrl">
+    <div class="card">
+      <section class="w3-container w3-center w3-content" style="max-width:3000px">
+        <mat-icon class="pos">code</mat-icon>
+        <h2 class="pos">Links</h2>
+        <p class="pos" *ngIf="personalDetails.linkedinUrl"><a [href]="personalDetails.linkedinUrl" target="_blank" rel="noopener">LinkedIn</a></p>
+        <p class="pos" *ngIf="personalDetails.githubUrl"><a [href]="personalDetails.githubUrl" target="_blank" rel="noopener">GitHub</a></p>
+        <p class="pos" *ngIf="personalDetails.portfolioUrl"><a [href]="personalDetails.portfolioUrl" target="_blank" rel="noopener">Portfolio</a></p>
+      </section>
+    </div>
+  </div>
+</ng-container>

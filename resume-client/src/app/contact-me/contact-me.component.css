@@ -1,19 +1,83 @@
 .center {
     margin: auto;
     width: 80%;
+    max-width: 640px;
     padding: 10px;
-}
-
-img {
-    height: 100px;
-    circle: 100px;
-    overflow: hidden;
-    border-radius: 50%;
 }
 
 .card {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    padding: 16px;
-    text-align: center;
+    padding: 20px 24px;
     background-color: #f1f1f1;
+}
+
+.title {
+    margin: 0 0 4px;
+    text-align: center;
+}
+
+.intro {
+    margin: 0 0 16px;
+    text-align: center;
+    color: #5d6675;
+}
+
+label {
+    display: block;
+    margin: 12px 0 4px;
+    font-weight: 600;
+}
+
+input, textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    border: 1px solid #c9ced8;
+    border-radius: 6px;
+    background: #fff;
+}
+
+input:focus, textarea:focus {
+    outline: 2px solid #1976d2;
+    outline-offset: -1px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.error {
+    display: block;
+    margin-top: 4px;
+    color: #b3261e;
+}
+
+/* Off-screen rather than display:none, so form-filling bots still see and fill it */
+.hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+button {
+    margin-top: 18px;
+}
+
+.notice {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.success {
+    color: #14532d;
+    background: #dcfce7;
+}
+
+.failure {
+    color: #b3261e;
+    background: #fdecea;
 }

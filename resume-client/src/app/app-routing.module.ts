@@ -1,5 +1,7 @@
 import { ContactMeComponent } from './contact-me/contact-me.component';
 import { AskComponent } from './ask/ask.component';
+import { ProjectsComponent } from './projects/projects.component';
+import { PublicationsComponent } from './publications/publications.component';
 import { PersonalDetailsComponent } from './personal-details/personal-details.component';
 import { EducationComponent } from './personal-details/education/education.component';
 import { ExperienceComponent } from './experience/experience.component';
@@ -15,6 +17,8 @@ const routes: Routes = [
    {path:"ask",component:AskComponent},
    {path:"skills",component:SkillsComponent},
    {path:"experience",component:ExperienceComponent},
+   {path:"projects",component:ProjectsComponent},
+   {path:"publications",component:PublicationsComponent},
    {path:"about-me",component:PersonalDetailsComponent},
    {path:"contact-me",component:ContactMeComponent}
 ];

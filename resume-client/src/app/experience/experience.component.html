@@ -1,19 +1,22 @@
-<div class="center">
+<p class="center" *ngIf="error">Could not load data from the backend.</p>
+
+<div class="center" *ngFor="let exp of expDetails">
     <div class="card">
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
         <mat-icon class="pos">work</mat-icon>
         <h2 class="pos">Work Profile</h2>
-        <h3 class="pos">{{expDetails.position}}</h3>
-        <h4 class="pos">{{expDetails.location}}</h4>
-        <p class="pos">{{expDetails.company}} - {{expDetails.client}}</p>
-        <p class="pos">{{expDetails.year}}</p>
-        <p class="pos">Description : </p>
-        <p class="pos">{{expDetails.description}}</p>
+        <h3 class="pos">{{exp.position}}</h3>
+        <h4 class="pos">{{exp.location}}</h4>
+        <p class="pos">{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span></p>
+        <p class="pos">{{exp.year}}</p>
+        <ul class="bullets">
+          <li *ngFor="let point of bulletsOf(exp.description)">{{ point }}</li>
+        </ul>
       </section>
     </div>
 </div>
 
-<div class="center">
+<div class="center" *ngIf="certDetails.length > 0">
   <div class="card">
     <section class="w3-container w3-center w3-content" style="max-width:3000px">
       <mat-icon class="pos">analytics</mat-icon>

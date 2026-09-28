@@ -11,6 +11,8 @@ import { EducationComponent } from './personal-details/education/education.compo
 import { PersonalDetailsComponent } from './personal-details/personal-details.component';
 import { ContactMeComponent } from './contact-me/contact-me.component';
 import { AskComponent } from './ask/ask.component';
+import { ProjectsComponent } from './projects/projects.component';
+import { PublicationsComponent } from './publications/publications.component';
 import { HttpClientModule } from '@angular/common/http';
 import { BiographyServiceService } from './biography-service.service';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -28,7 +30,9 @@ import {MatIconModule} from '@angular/material/icon';
     EducationComponent,
     PersonalDetailsComponent,
     ContactMeComponent,
-    AskComponent
+    AskComponent,
+    ProjectsComponent,
+    PublicationsComponent
   ],
   imports: [
     BrowserModule,
