@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AskPranav</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --text: #1c2330; --muted: #5d6675; --border: #e0e4ea;
+    --accent: #2f5bea; --accent-text: #ffffff; --user-bg: #2f5bea; --user-text: #ffffff;
+    --bot-bg: #eef1f6; --danger: #b3261e; --chip-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1a1e26; --text: #e7eaf0; --muted: #98a1b1; --border: #2b3140;
+      --accent: #6f8cff; --accent-text: #0e1116; --user-bg: #3b5bdb; --user-text: #ffffff;
+      --bot-bg: #252b37; --danger: #ff8a80; --chip-bg: #1a1e26;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center;
+  }
+  .app {
+    width: 100%; max-width: 760px; height: 100%; display: flex; flex-direction: column;
+    background: var(--panel); border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  header h1 { margin: 0; font-size: 1.2rem; }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+  #log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 14px; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: var(--user-bg); color: var(--user-text); white-space: pre-wrap; }
+  .msg.bot { align-self: flex-start; background: var(--bot-bg); }
+  .msg.bot.error { border: 1px solid var(--danger); color: var(--danger); background: transparent; }
+  .msg.bot p { margin: 0 0 8px; } .msg.bot p:last-child { margin-bottom: 0; }
+  .msg.bot ul { margin: 4px 0 8px; padding-left: 20px; }
+  .meta { margin-top: 8px; font-size: 0.8rem; color: var(--muted); }
+  .meta details { margin-top: 6px; }
+  .meta summary { cursor: pointer; }
+  .meta li { margin: 4px 0; }
+  .dots span { display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%;
+    background: var(--muted); animation: blink 1.2s infinite both; }
+  .dots span:nth-child(2) { animation-delay: .2s; } .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .2; } 40% { opacity: 1; } }
+  #suggestions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 12px; }
+  #suggestions button {
+    background: var(--chip-bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer;
+  }
+  #suggestions button:hover { border-color: var(--accent); }
+  form { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+  textarea {
+    flex: 1; resize: none; padding: 10px 12px; font: inherit; color: var(--text);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; max-height: 140px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  #send {
+    background: var(--accent); color: var(--accent-text); border: 0; border-radius: 10px;
+    padding: 0 18px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  #send:disabled { opacity: .5; cursor: not-allowed; }
+  footer { padding: 0 20px 12px; color: var(--muted); font-size: 0.75rem; }
+  @media (max-width: 520px) { .app { border: 0; } .msg { max-width: 94%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>AskPranav</h1>
+    <p>Ask about Pranav's experience, skills, projects and publications. Answers come from his real resume data.</p>
+  </header>
+
+  <main id="log" aria-live="polite"></main>
+
+  <div id="suggestions"></div>
+
+  <form id="form">
+    <textarea id="input" rows="1" maxlength="4000" placeholder="e.g. What is his experience with RabbitMQ?" aria-label="Your question"></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+  <footer>AI-generated from Pranav's data; it can still make mistakes. Limit: 2 questions per 5 minutes. Enter to send, Shift+Enter for a new line.</footer>
+</div>
+
+<script>
+  // Empty string = same origin (the page is served by the Spring Boot app). If you host this file on
+  // another site, set this to the backend's URL and set ASKPRANAV_CORS_ALLOWED_ORIGIN to that site.
+  const API_BASE = '';
+
+  const SUGGESTIONS = [
+    "Give me a 30-second summary of Pranav",
+    "What is his experience with RabbitMQ and event-driven systems?",
+    "Has he worked in fintech or payments?",
+    "What certifications does he have?",
+    "What are his contact details?"
+  ];
+
+  const log = document.getElementById('log');
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const send = document.getElementById('send');
+  const suggestions = document.getElementById('suggestions');
+
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  // Minimal, XSS-safe formatting: every line is inserted via textContent; only **bold** and
+  // "* " / "- " bullets are recognised. No innerHTML anywhere.
+  function renderAnswer(container, text) {
+    let list = null;
+    text.split('\n').forEach(function (line) {
+      const bullet = line.match(/^\s*[*\-•]\s+(.*)$/);
+      if (bullet) {
+        if (!list) { list = el('ul'); container.appendChild(list); }
+        const li = el('li'); addInline(li, bullet[1]); list.appendChild(li);
+      } else if (line.trim() === '') {
+        list = null;
+      } else {
+        list = null;
+        const p = el('p'); addInline(p, line.trim()); container.appendChild(p);
+      }
+    });
+  }
+  function addInline(node, text) {
+    text.split(/(\*\*[^*]+\*\*)/g).forEach(function (part) {
+      if (/^\*\*[^*]+\*\*$/.test(part)) node.appendChild(el('strong', null, part.slice(2, -2)));
+      else if (part) node.appendChild(document.createTextNode(part));
+    });
+  }
+
+  function scrollDown() { log.scrollTop = log.scrollHeight; }
+
+  function addUser(text) { log.appendChild(el('div', 'msg user', text)); scrollDown(); }
+
+  function addTyping() {
+    const bubble = el('div', 'msg bot');
+    const dots = el('div', 'dots');
+    dots.append(el('span'), el('span'), el('span'));
+    bubble.appendChild(dots);
+    log.appendChild(bubble); scrollDown();
+    return bubble;
+  }
+
+  function fillBot(bubble, data, isError) {
+    bubble.replaceChildren();
+    if (isError) bubble.classList.add('error');
+    renderAnswer(bubble, data.answer || '');
+    if (!isError && data.sources && data.sources.length) {
+      const meta = el('div', 'meta');
+      const details = el('details');
+      details.appendChild(el('summary', null, 'Grounded in ' + data.sources.length + ' source' + (data.sources.length > 1 ? 's' : '')));
+      const ul = el('ul');
+      data.sources.forEach(function (s) {
+        const li = el('li'); li.appendChild(el('strong', null, s.label + ': ')); li.appendChild(document.createTextNode(s.excerpt));
+        ul.appendChild(li);
+      });
+      details.appendChild(ul); meta.appendChild(details); bubble.appendChild(meta);
+    } else if (!isError && data.planUsed === 'TOOL_CALL') {
+      bubble.appendChild(el('div', 'meta', 'Answered from Pranav\'s structured profile data.'));
+    }
+    scrollDown();
+  }
+
+  async function ask(question) {
+    addUser(question);
+    const bubble = addTyping();
+    send.disabled = true;
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, 180000);
+    try {
+      const res = await fetch(API_BASE + '/ask/question', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question }), signal: controller.signal
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) { /* non-JSON body */ }
+      if (res.ok && data) fillBot(bubble, data, false);
+      else fillBot(bubble, { answer: (data && data.answer) || 'Something went wrong (HTTP ' + res.status + '). Please try again.' }, true);
+    } catch (e) {
+      fillBot(bubble, { answer: e.name === 'AbortError' ? 'That took too long. Please try again.' : 'Could not reach the server.' }, true);
+    } finally {
+      clearTimeout(timer); send.disabled = false; input.focus();
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (!q || send.disabled) return;
+    input.value = ''; input.style.height = 'auto'; suggestions.style.display = 'none';
+    ask(q);
+  });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+  input.addEventListener('input', function () {
+    input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  });
+
+  SUGGESTIONS.forEach(function (text) {
+    const b = el('button', null, text); b.type = 'button';
+    b.addEventListener('click', function () { suggestions.style.display = 'none'; ask(text); });
+    suggestions.appendChild(b);
+  });
+
+  log.appendChild(el('div', 'msg bot', "Hi, I'm AskPranav. Ask me anything about Pranav's career, or paste a job description and I'll show how his experience maps to it."));
+</script>
+</body>
+</html>

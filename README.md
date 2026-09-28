@@ -7,7 +7,7 @@ write-ups, and GitHub READMEs - instead of a static resume page. Built on top of
 Demonstrates, in Java/Spring rather than Python:
 
 - **RAG** (ingestion → retrieval → generation) over real career content, stored in **pgvector**
-- **Model-agnostic LLM integration** via Spring AI's `ChatClient` - swap OpenAI/Anthropic/Gemini by config, not code
+- **LLM integration** through Spring AI's `ChatClient`, running on **Gemini** (chat and embeddings) via the native Google GenAI client
 - **Prompt-engineered guardrails** - answers are grounded-only, refuse to fabricate, decline off-topic questions
 - **Agentic tool/function calling** - `matchJobDescription`, `getProjectDetails`, `getPublications`, `getContactInfo`, and more
 - **An MCP server** - the same tools are queryable directly from Claude Desktop / Claude Code
@@ -68,8 +68,8 @@ reimplementing tool-calling itself.
   virtualization enabled and a full restart (not shut down) after `wsl --install`. Or point
   `DB_HOST`/`DB_PORT` at an existing Postgres+pgvector instance instead. If a native Postgres already
   owns port 5432, set `DB_PORT=5433` - the compose file honors it.
-- A Gemini API key (Google AI Studio), or an Anthropic/OpenAI key. Free-tier Gemini keys allow only a few
-  requests per minute per model, and one question makes several model calls, so expect 429s under load.
+- A Gemini API key (Google AI Studio). Free-tier keys have small per-minute and daily quotas, and one
+  question makes several model calls, so expect 429s once the quota is spent (the API then answers 503).
 
 ## Environment variables
 
@@ -77,12 +77,12 @@ reimplementing tool-calling itself.
 |---|---|---|
 | `DB_USERNAME`, `DB_PASSWORD` | yes | Postgres credentials |
 | `DB_HOST`, `DB_PORT`, `DB_NAME` | no (sensible defaults) | Postgres connection details |
-| `ASKPRANAV_AI_PROVIDER` | no (`anthropic` default) | `openai` \| `anthropic` \| `google-genai` (Gemini via a plain API key) |
-| `GEMINI_API_KEY` | if using Gemini | Drives chat and embeddings through Spring AI's native Google GenAI client |
-| `ANTHROPIC_API_KEY` | if using Anthropic chat | Anthropic has no embedding model, so embeddings still come from Gemini or OpenAI (`ASKPRANAV_EMBEDDING_STARTER`) |
-| `OPENAI_API_KEY` | if using OpenAI | |
+| `GEMINI_API_KEY` | yes | Drives chat and embeddings through Spring AI's native Google GenAI client |
+| `ASKPRANAV_GEMINI_MODEL` | no (`gemini-3.6-flash`) | Chat model; change it if Google retires the current one |
+| `ASKPRANAV_GEMINI_EMBEDDING_MODEL` | no (`gemini-embedding-001`) | Embedding model |
 | `EMBEDDING_DIMENSIONS` | no (`768` default) | Must match the embedding model (768 for `gemini-embedding-001` as configured) |
-| `ASKPRANAV_ANTHROPIC_MODEL` | no (`claude-sonnet-5` default) | swap Claude model without a code change |
+| `ASKPRANAV_RATE_LIMIT_MAX`, `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS` | no (`2`, `300`) | Per-IP limit on `POST /ask/question`: 2 questions per 5 minutes |
+| `ASKPRANAV_FORWARD_HEADERS` | no (`none`) | Set to `native` behind a reverse proxy so the limiter sees each visitor's real IP |
 | `ASKPRANAV_GITHUB_REPOS` | no | comma-separated `owner/repo` slugs whose READMEs to ingest |
 | `ASKPRANAV_INGESTION_MODE` | no (`if-empty` default) | `if-empty` \| `always` |
 
@@ -112,6 +112,25 @@ curl -X POST localhost:5000/ask/question \
 
 The existing CRUD endpoints (`/personal/personal-details`, `/experience/experience-details`, etc.)
 are unchanged in shape from the source repo and still work the same way.
+
+### Chat UI
+
+Open <http://localhost:5000/> once the app is running. It is a single static page
+(`askpranav-service/src/main/resources/static/index.html`) served by the Spring Boot app itself, so it
+needs no build step and no CORS setup. It calls `POST /ask/question`, shows the answer, and lists the
+sources the answer was grounded in. Each question is answered independently (no conversation memory).
+To host the page on a different site, set `API_BASE` at the top of the file to the backend URL and set
+`ASKPRANAV_CORS_ALLOWED_ORIGIN` on the backend to that site's origin.
+
+### Rate limit
+
+`POST /ask/question` allows **2 questions per 5 minutes per client IP** (sliding window), because each
+question makes several Gemini calls and the URL is public. The 3rd question inside the window gets
+`429 Too Many Requests` with a `Retry-After` header, and the chat page shows the message. Tune it with
+`ASKPRANAV_RATE_LIMIT_MAX` / `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS`. Limits: counters live in memory
+(reset on restart, per instance), and the MCP endpoint (`/sse`) is not rate-limited or authenticated.
+Behind a reverse proxy, set `ASKPRANAV_FORWARD_HEADERS=native`, otherwise every visitor shares the
+proxy's IP and one person can lock everyone out.
 
 ### Connecting an MCP client
 
@@ -153,13 +172,12 @@ test since it spends your API budget.
 
 ## Version notes
 
-- **Spring AI 1.1.8 on Spring Boot 3.5.15**, chosen deliberately. Spring AI 1.0.x's OpenAI client cannot
-  round-trip the `thought_signature` that Gemini 3 models require on tool calls, so tool-calling
-  questions failed with HTTP 400 through Gemini's OpenAI-compatibility endpoint. The native
+- **Spring AI 1.1.8 on Spring Boot 3.5.15**, chosen deliberately. Gemini 3 models require a
+  `thought_signature` to be round-tripped on tool calls; Spring AI 1.0.x's OpenAI client (used against
+  Gemini's compatibility endpoint) dropped it, so tool-calling questions failed with HTTP 400. The native
   `spring-ai-starter-model-google-genai` client in 1.1.x handles it. Spring AI 2.0.x needs Spring Boot 4,
   which is a much larger migration.
-- `application.yml` sets `spring.ai.model.*` selectors (chat, embedding, and `none` for image/audio/
-  moderation). Without them, every starter on the classpath builds its own model at startup and any one
-  missing an API key crashes the whole app.
+- Gemini is the only model provider (chat and embeddings); the OpenAI, Anthropic and Ollama starters
+  were removed. Switching to another provider later means adding its starter and a `ChatModel` bean.
 - Google retires Gemini models quickly (2.x models were already refused for new keys in 2026). If chat
   starts returning 404 "no longer available", change `ASKPRANAV_GEMINI_MODEL` - no code change needed.

@@ -2,7 +2,9 @@ package com.askpranav.ai.web;
 
 import com.askpranav.ai.orchestration.OrchestrationService;
 import com.askpranav.ai.rag.AnswerResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -26,15 +28,27 @@ import java.util.List;
 public class AskController {
 
     private final OrchestrationService orchestrationService;
+    private final AskRateLimiter rateLimiter;
 
-    public AskController(OrchestrationService orchestrationService) {
+    public AskController(OrchestrationService orchestrationService, AskRateLimiter rateLimiter) {
         this.orchestrationService = orchestrationService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/question")
-    public ResponseEntity<AnswerResponse> ask(@RequestBody AskRequest request) {
+    public ResponseEntity<AnswerResponse> ask(@RequestBody AskRequest request, HttpServletRequest http) {
         if (request.question() == null || request.question().isBlank()) {
             return ResponseEntity.badRequest().build();
+        }
+        // Checked after validation so a malformed request doesn't burn one of the caller's questions.
+        // Behind a reverse proxy, set server.forward-headers-strategy=native (ASKPRANAV_FORWARD_HEADERS)
+        // so this is the visitor's IP rather than the proxy's.
+        AskRateLimiter.Decision decision = rateLimiter.tryAcquire(http.getRemoteAddr());
+        if (!decision.allowed()) {
+            log.info("Rate limit hit; retry in {}s", decision.retryAfterSeconds());
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(decision.retryAfterSeconds()))
+                    .body(new AnswerResponse(rateLimitMessage(decision.retryAfterSeconds()), List.of(), "RATE_LIMITED"));
         }
         log.info("AskPranav question received");
         try {
@@ -48,5 +62,14 @@ public class AskController {
                             "The language model is temporarily unavailable or rate limited. Please try again shortly.",
                             List.of(), "ERROR"));
         }
+    }
+
+    private String rateLimitMessage(long retryAfterSeconds) {
+        long windowMinutes = Math.max(1, rateLimiter.windowSeconds() / 60);
+        String wait = retryAfterSeconds >= 60
+                ? ((retryAfterSeconds + 59) / 60) + " minute(s)"
+                : retryAfterSeconds + " second(s)";
+        return "To keep this free to use, each visitor can ask " + rateLimiter.maxRequests()
+                + " questions every " + windowMinutes + " minutes. Please try again in " + wait + ".";
     }
 }
