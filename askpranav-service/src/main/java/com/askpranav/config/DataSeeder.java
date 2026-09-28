@@ -176,7 +176,7 @@ public class DataSeeder implements CommandLineRunner {
         skillRepository.save(new Skills(null, "Angular, TypeScript, HTML5, CSS3", "Frontend"));
         skillRepository.save(new Skills(null, "Agile, Scrum, SAFe, Technical Leadership", "Process & Leadership"));
         skillRepository.save(new Skills(null,
-                "AI Assisted Development, AI Coding Agents, Prompt Engineering, RAG", "AI-Assisted Development"));
+                "AI Assisted Development, Claude Code, Prompt Engineering, RAG", "AI-Assisted Development"));
         log.info("Seeded Skills (8 categories)");
     }
 
@@ -218,16 +218,17 @@ public class DataSeeder implements CommandLineRunner {
                         + "Prompt Engineering, Spring Security, Angular, Docker",
                 "https://github.com/Pranavmundhe3/AskPranav");
 
-        // The resume itself leaves the scraping framework and vector DB as unfilled placeholders -
-        // carried over verbatim rather than guessed; fill these in (or via POST /project/save-project)
-        // once decided.
+        // A separate project from the resume, worded exactly as there (the tools named are that project's
+        // own, unrelated to this application's dependencies). The resume leaves the scraping framework
+        // and vector DB as unfilled placeholders - carried over verbatim rather than guessed; fill these
+        // in (or via POST /project/save-project) once decided.
         seedProjectIfMissing(
                 "AI-Powered Job Search Agent",
                 "2026 - Present",
-                "Built an autonomous job-search agent in Python using an AI coding agent as the development "
+                "Built an autonomous job-search agent in Python using Claude Code as the development "
                         + "agent, automating discovery and ranking of job postings from job boards, with a "
-                        + "RAG-based pipeline scoring job-fit via prompt-engineered LLM API calls.",
-                "Python, AI coding agent, LLM API, RAG, Prompt Engineering, "
+                        + "RAG-based pipeline scoring job-fit via prompt-engineered Claude API calls.",
+                "Python, Claude Code, Anthropic API, RAG, Prompt Engineering, "
                         + "[web scraping framework - TBD], [vector DB - TBD]",
                 null);
     }
