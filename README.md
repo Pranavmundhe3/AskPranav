@@ -22,15 +22,13 @@ One thing carried over from the source repo that needs your attention, not silen
    `askpranav-service/src/main/resources/application.yml`, which uses env vars only) - but if that
    password is still live, rotate it.
 
-`DataSeeder` now seeds real data (`Experience`, `Skills`, `Certifications`, `Summary`, `Project`,
-`Publication`) sourced from the resume in `knowledge/`, and `KnowledgeFolderLoader` ingests every
-file dropped into `askpranav-service/src/main/resources/knowledge/` (`.md`/`.txt` verbatim,
-`.docx`/`.pdf`/`.pptx`/etc. via Apache Tika) - no more hardcoded filename list. Drop an updated
-resume or a new write-up in there and restart (`ASKPRANAV_INGESTION_MODE=always` while iterating)
-to re-ingest it. Resume files (`.docx`/`.pdf`/`.pptx`) in that folder are git-ignored on purpose, since they
-carry contact details - add your own locally and the app reads it at runtime. One still-open item: the seeded `Project` row's `techStack` carries two `[TBD]`
-placeholders (web scraping framework, vector DB) straight from the resume text - fill those in via
-`POST /project/save-project` or by editing `DataSeeder.java` once decided.
+`DataSeeder` seeds the first-run data (`Experience`, `Skills`, `Certifications`, `Summary`, `Projects`,
+`Publication`), taken from the resume. After that the app **watches the knowledge folder while it runs**
+(see "Watching the knowledge folder"): drop in a new or updated resume or write-up and it is picked up
+within seconds, no restart. Resume files (`.docx`/`.pdf`/`.pptx`) in that folder are git-ignored on purpose,
+since they carry contact details; add your own locally. One still-open item: the seeded job-search `Project`
+row's `techStack` carries two `[TBD]` placeholders (web scraping framework, vector DB) straight from the
+resume text - fill those in via `POST /project/save-project` once decided.
 
 ## Repo layout
 
@@ -50,8 +48,9 @@ recruiter / hiring manager
         │
         └── any MCP client ─────────────────► same BiographyTools, exposed as MCP tools directly
 
-KnowledgeBaseIngestionRunner (startup) ── reads JPA entities + knowledge/* (any file type, via Tika) + GitHub READMEs
-                                        ── chunks + embeds ──► pgvector (VectorStore)
+KnowledgeBaseIngestionRunner (startup) ── reads the DB rows + GitHub READMEs ── chunks + embeds ──► pgvector
+KnowledgeFolderScanner (every 10s)     ── new/changed/deleted files in knowledge/ ──► pgvector (per-file chunks)
+                                       └─ resume-type PDF/Word ── Gemini extracts ── validated ──► DB rows the UI shows
 ```
 
 **Honesty note on "multi-agent orchestration":** Java has no LangGraph. `OrchestrationService` is a
@@ -90,8 +89,12 @@ reimplementing tool-calling itself.
 | `ASKPRANAV_GITHUB_REPOS` | no | Comma-separated repo (`owner/repo` or URL) or account (`https://github.com/owner`) entries; an account pulls all its public non-fork repos' READMEs |
 | `ASKPRANAV_GITHUB_REPOS` | no | comma-separated `owner/repo` slugs whose READMEs to ingest |
 | `ASKPRANAV_INGESTION_MODE` | no (`if-empty` default) | `if-empty` \| `always` |
+| `ASKPRANAV_KNOWLEDGE_DIR` | no (`src/main/resources/knowledge`) | Folder that is watched while the app runs |
+| `ASKPRANAV_KNOWLEDGE_SCAN_MS` | no (`10000`) | How often the folder is checked |
 
-Never commit a `.env` file with real values - `.gitignore` already excludes it.
+Never commit a `.env` file with real values - `.gitignore` already excludes it. Put values that contain
+spaces in double quotes (Gmail app passwords are shown as four groups of letters), for example
+`MAIL_PASSWORD="abcd efgh ijkl mnop"`; otherwise `source .env` fails on that line.
 
 ## Running locally
 
@@ -221,6 +224,34 @@ Verification, create an App Password (Google Account > Security > App passwords)
 `MAIL_USERNAME=<your gmail address>` and `MAIL_PASSWORD=<the app password>`. Until then the form answers
 "The message could not be sent right now." To try it without sending real mail, run any local SMTP sink
 and start the backend with `MAIL_HOST=127.0.0.1 MAIL_PORT=2525 MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false`.
+
+### Watching the knowledge folder
+
+Every 10 seconds the app compares the folder (`ASKPRANAV_KNOWLEDGE_DIR`) with what it has already processed,
+by SHA-256, remembered in the `knowledge_file` table so a restart redoes nothing unless a file changed.
+
+| You do | Chat (vector index) | Database and site |
+|---|---|---|
+| Add or edit a `.md`/`.txt`/`.pdf`/`.docx`/`.pptx` file | old chunks replaced by new ones | unchanged |
+| Add or edit a **resume** (PDF/Word whose name contains `resume`, `cv` or `lebenslauf`) | same, plus the row-derived chunks are rebuilt | Gemini reads it into structured data, which replaces summary, experience, education, skills, certifications, publications and languages |
+| Delete a file | its chunks are removed | rows imported from it are **kept** |
+
+The pages read the database, so an import shows the next time a page is opened or reloaded (no live push).
+
+How the resume import protects your data: the model's output is validated first (it must have a summary and
+work experience with bullets) and written in one transaction, so a bad, partial or failed extraction leaves the
+existing rows untouched. Projects are added or updated by name but never deleted (this application itself is
+not on the resume); hobbies, email and links are never modified; and values a resume does not state (a client
+name, a certification date, a grade) are kept from the existing row. A failure such as the model's quota is
+recorded and retried after 10 minutes, not on every scan. A file still being copied (modified in the last
+2 seconds) waits for the next scan. The first scan after this feature is introduced only records a resume that
+is already there, since the database was seeded from it; anything added afterwards is processed.
+
+Limits: the import step needs Gemini to be reachable. Folder watching and re-embedding were tested live
+(add, edit, delete); the model-based resume import is covered by unit tests with a stand-in extractor and a
+live attempt that was refused by the exhausted Gemini quota (which left the database untouched, as designed),
+so it has not yet been seen working end to end. The import replaces those sections wholesale, so edit the
+resume file rather than the rows if the file is meant to be the source of truth.
 
 ### Rate limit
 

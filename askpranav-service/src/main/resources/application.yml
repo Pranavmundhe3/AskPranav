@@ -72,6 +72,16 @@ askpranav:
     # always: re-embed every startup (dev). if-empty: only embed if the vector store looks empty (default).
     mode: ${ASKPRANAV_INGESTION_MODE:if-empty}
   knowledge:
+    # Folder that is watched while the app runs. Drop a PDF/Word/text file in and it is embedded for the chat
+    # within one scan; a resume-type PDF/Word document (name contains one of the hints below) is also imported
+    # into the database that the site pages read. Relative paths resolve against the directory the app starts in.
+    dir: ${ASKPRANAV_KNOWLEDGE_DIR:src/main/resources/knowledge}
+    scan-interval-ms: ${ASKPRANAV_KNOWLEDGE_SCAN_MS:10000}
+    # A file modified more recently than this is assumed to still be copying and waits for the next scan.
+    settle-ms: 2000
+    # After a failed import/embedding (e.g. model quota) the same file version is not retried for this long.
+    retry-minutes: 10
+    resume-name-hints: resume,cv,lebenslauf
     # Comma-separated GitHub sources whose README.md files are ingested. Each entry may be a repo
     # ("Pranavmundhe3/AskPranav" or its URL) or an account URL ("https://github.com/Pranavmundhe3"),
     # which pulls every public, non-fork repository of that account.

@@ -4,6 +4,7 @@ import com.askpranav.domain.Education;
 import com.askpranav.repository.EducationRepository;
 import com.askpranav.service.EducationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class EducationServiceImpl implements EducationService {
 
     @Override
     public List<Education> getEducationDetails() {
-        return educationRepository.findAll();
+        return educationRepository.findAll(Sort.by("id"));
     }
 
     @Override

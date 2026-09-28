@@ -4,6 +4,7 @@ import com.askpranav.domain.Skills;
 import com.askpranav.repository.SkillRepository;
 import com.askpranav.service.SkillService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class SkillServiceImpl implements SkillService {
 
     @Override
     public List<Skills> getSkillDetails() {
-        return skillRepository.findAll();
+        return skillRepository.findAll(Sort.by("id"));
     }
 
     @Override
