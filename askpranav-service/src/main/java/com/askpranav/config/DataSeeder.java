@@ -74,13 +74,12 @@ public class DataSeeder implements CommandLineRunner {
     private void seedPersonal() {
         if (personalRepository.count() > 0) return;
         Personal personal = new Personal();
-        // Date of birth and email are deliberately NOT seeded: this repo is public. Add them locally
-        // through the Personal CRUD endpoint if you want getContactInfo() to return them.
-        personal.setDob(null);
-        personal.setHobbies("Competitive Swimming");
-        // English/German proficiency levels are from the resume's LANGUAGES section; Hindi/Marathi
-        // are native-language facts the resume (professional-facing) doesn't list but which still hold.
-        personal.setLanguages("English (C1), German (A2), Hindi, Marathi");
+        // The email is deliberately NOT seeded: this repo is public. Add it locally through the Personal
+        // CRUD endpoint if you want getContactInfo() to return it. No date of birth is stored at all.
+        personal.setHobbies("Music, Piano Playing, Scientific Research & Exploration, "
+                + "Culinary Arts & Cooking, Competitive Swimming");
+        // Proficiency levels are from the resume's LANGUAGES section, which lists only these two.
+        personal.setLanguages("English (C1), German (A2)");
         // TODO: fill in a portfolio URL before relying on getContactInfo(), if you want one
         personal.setEmail(null);
         personal.setLinkedinUrl("https://www.linkedin.com/in/pranav-mundhe-131059104/");
@@ -111,17 +110,18 @@ public class DataSeeder implements CommandLineRunner {
         tSystems.setClient("Volkswagen");
         tSystems.setLocation("India");
         tSystems.setYear("Aug 2025 - Present");
-        tSystems.setDescription(
-                "Modernized Volkswagen's 17-year-old Dealer workshop system integrations by replacing "
-                        + "synchronous SOAP with Java, Spring Boot and event driven architecture using RabbitMQ "
-                        + "messaging, extending the system's operational lifespan without a full rewrite. "
-                        + "Reduced environment validation effort by 90% by designing Resilience4j fault-tolerance "
-                        + "patterns and centralized monitoring dashboard for 5 environments and 25 distributed "
-                        + "microservices, saving more than 5 hours/week and enabling early fault detection. "
-                        + "Recognized with T-Systems India's SPOTLIGHT Award (Q1 2026) for delivering system "
-                        + "transition and key module rollout. Led end-to-end delivery of more than 6 key features. "
-                        + "Owned design, testing, deployment, and production support with cross functional teams "
-                        + "in Germany, driving technical decisions throughout.");
+        // One bullet per line, exactly as the resume lists them; the UI renders each line as a bullet.
+        tSystems.setDescription(bullets(
+                "Modernized Volkswagen's 17-year-old Dealer workshop system integrations by replacing synchronous "
+                        + "SOAP with Java, Spring Boot and event driven architecture using RabbitMQ messaging, "
+                        + "extending the system's operational lifespan without a full rewrite.",
+                "Reduced environment validation effort by 90% by designing Resilience4j fault-tolerance patterns "
+                        + "and centralized monitoring dashboard for 5 environments and 25 distributed microservices, "
+                        + "saving more than 5 hours/week and enabling early fault detection.",
+                "Recognized with T-Systems India's SPOTLIGHT Award (Q1 2026) for delivering system transition and "
+                        + "key module rollout. Led end-to-end delivery of more than 6 key features. Owned design, "
+                        + "testing, deployment, and production support with cross functional teams in Germany, "
+                        + "driving technical decisions throughout."));
         experienceRepository.save(tSystems);
 
         Experience here = new Experience();
@@ -130,15 +130,16 @@ public class DataSeeder implements CommandLineRunner {
         here.setClient(null);
         here.setLocation("India");
         here.setYear("Oct 2023 - Aug 2025");
-        here.setDescription(
-                "Built a real-time streaming pipeline (Java 11, Apache Camel, RabbitMQ) that ingested a new "
-                        + "live accident-feed from a provider across 8 new EU countries, expanding HERE Maps' "
-                        + "incident coverage in Europe and onboarding new enterprise clients. Developed AWS Lambda "
-                        + "integration for 6 accident-feed providers total, eliminating manual IP-whitelisting for "
-                        + "third-party communication and removing a recurring deployment downtime of 15 minutes "
-                        + "every month. Embedded automated smoke tests into GitLab CI/CD pipelines to catch bugs "
-                        + "and faults before release, and configured Splunk logging with new dashboards across "
-                        + "distributed systems, cutting production troubleshooting time from hours to minutes.");
+        here.setDescription(bullets(
+                "Built a real-time streaming pipeline (Java 11, Apache Camel, RabbitMQ) that ingested a new live "
+                        + "accident-feed from provider across new 8 EU countries, expanding HERE Maps' incident "
+                        + "coverage in Europe. This coverage boost onboarded new enterprise clients.",
+                "Developed AWS Lambda integration for total 6 accident-feed providers, eliminating manual "
+                        + "IP-whitelisting for third-party communication and removing a recurring deployment "
+                        + "downtime of 15 minutes every month.",
+                "Embedded automated smoke tests into GitLab CI/CD pipelines to catch bugs, faults before release, "
+                        + "and configured Splunk logging and made new dashboards across distributed systems, "
+                        + "cutting production troubleshooting time from hours to minutes."));
         experienceRepository.save(here);
 
         Experience ltiMindtree = new Experience();
@@ -147,14 +148,14 @@ public class DataSeeder implements CommandLineRunner {
         ltiMindtree.setClient("Nets DK");
         ltiMindtree.setLocation("Mumbai, India");
         ltiMindtree.setYear("Aug 2020 - Oct 2023");
-        ltiMindtree.setDescription(
+        ltiMindtree.setDescription(bullets(
                 "Developed high volume Java, Spring Boot microservices with Docker and Amazon EKS, supporting "
-                        + "real-time transaction insights for more than 200,000 Nordic merchants. Reduced API and "
-                        + "database call volume by 60% and payload size by 20% through DB query optimization, "
-                        + "cutting merchant dashboard load time from 40 seconds to 5 seconds. Built dynamic "
-                        + "Angular reactive forms that enabled onboarding of new POS machine types. Improved "
-                        + "CI/CD pipeline execution speed by 30% by restructuring and downsizing a bloated Git "
-                        + "repository, accelerating build and deployment workflows.");
+                        + "real-time transaction insights for more than 200,000 Nordic merchants.",
+                "Reduced API and database call volume by 60% and payload size by 20% through DB query "
+                        + "optimization, cutting merchant dashboard load time from 40 seconds to 5 seconds. Built "
+                        + "dynamic Angular reactive forms that enabled onboarding of new POS machine types.",
+                "Improved CI/CD pipeline execution speed by 30% by restructuring and downsizing a bloated Git "
+                        + "repository, accelerating build and deployment workflows."));
         experienceRepository.save(ltiMindtree);
 
         log.info("Seeded Experience (3 roles: T-Systems, HERE Technologies, LTIMindtree)");
@@ -204,25 +205,51 @@ public class DataSeeder implements CommandLineRunner {
         log.info("Seeded Summary");
     }
 
+    /** Each project is added only if no project with that name exists, so a new one can be introduced later. */
     private void seedProjects() {
-        if (projectRepository.count() > 0) return;
-        Project project = new Project();
-        project.setName("AI-Powered Job Search Agent");
-        project.setDuration("2026 - Present");
-        project.setShortDescription(
-                "Built an autonomous job-search agent in Python using an AI coding agent as the development "
-                        + "agent, automating discovery and ranking of job postings from job boards, with a "
-                        + "RAG-based pipeline scoring job-fit via prompt-engineered LLM API calls.");
+        seedProjectIfMissing(
+                "AskPranav - AI Career Agent",
+                "Sep 2026 - Present",
+                "Built an AI agent that answers recruiter questions about my career, grounded in my real resume, "
+                        + "project write-ups and GitHub READMEs through a retrieval-augmented (RAG) pipeline. "
+                        + "Exposes tool calls such as job-description matching and an MCP server, with guardrails "
+                        + "against fabrication, a chat UI, rate limiting and secured write endpoints.",
+                "Java 17, Spring Boot 3, Spring AI, Gemini, RAG, pgvector (PostgreSQL), MCP, Tool Calling, "
+                        + "Prompt Engineering, Spring Security, Angular, Docker",
+                "https://github.com/Pranavmundhe3/AskPranav");
+
         // The resume itself leaves the scraping framework and vector DB as unfilled placeholders -
         // carried over verbatim rather than guessed; fill these in (or via POST /project/save-project)
         // once decided.
-        project.setTechStack("Python, AI coding agent, LLM API, RAG, Prompt Engineering, "
-                + "[web scraping framework - TBD], [vector DB - TBD]");
-        project.setGithubUrl(null);
+        seedProjectIfMissing(
+                "AI-Powered Job Search Agent",
+                "2026 - Present",
+                "Built an autonomous job-search agent in Python using an AI coding agent as the development "
+                        + "agent, automating discovery and ranking of job postings from job boards, with a "
+                        + "RAG-based pipeline scoring job-fit via prompt-engineered LLM API calls.",
+                "Python, AI coding agent, LLM API, RAG, Prompt Engineering, "
+                        + "[web scraping framework - TBD], [vector DB - TBD]",
+                null);
+    }
+
+    private void seedProjectIfMissing(String name, String duration, String description, String techStack,
+                                      String githubUrl) {
+        if (projectRepository.findFirstByNameContainingIgnoreCase(name).isPresent()) return;
+        Project project = new Project();
+        project.setName(name);
+        project.setDuration(duration);
+        project.setShortDescription(description);
+        project.setTechStack(techStack);
+        project.setGithubUrl(githubUrl);
         project.setLiveUrl(null);
         project.setReadmeExcerpt(null);
         projectRepository.save(project);
-        log.info("Seeded Project (AI-Powered Job Search Agent)");
+        log.info("Seeded Project ({})", name);
+    }
+
+    /** Joins bullet points into the stored form: one point per line. */
+    private static String bullets(String... points) {
+        return String.join("\n", points);
     }
 
     private void seedPublications() {

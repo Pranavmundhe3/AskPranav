@@ -15,6 +15,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,7 +30,8 @@ import java.util.List;
  * Known limitation, documented rather than silently accepted: this only runs at startup, so an edit
  * made via the existing POST /save-* CRUD endpoints won't show up in answers until the app restarts.
  * askpranav.ingestion.mode=if-empty (default) skips re-embedding on every restart once the store has
- * been populated once; set it to "always" during content-editing sessions.
+ * been populated once; set it to "always" during content-editing sessions. "always" first empties the
+ * store, so re-ingesting replaces the old chunks instead of duplicating them.
  */
 @Component
 @Order(2)
@@ -49,6 +51,8 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
     private final GithubReadmeFetcher githubReadmeFetcher;
     private final VectorStore vectorStore;
     private final String ingestionMode;
+    private final JdbcTemplate jdbcTemplate;
+    private final String vectorTable;
 
     public KnowledgeBaseIngestionRunner(SummaryRepository summaryRepository,
                                          ExperienceRepository experienceRepository,
@@ -61,7 +65,14 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
                                          KnowledgeFolderLoader knowledgeFolderLoader,
                                          GithubReadmeFetcher githubReadmeFetcher,
                                          VectorStore vectorStore,
-                                         @Value("${askpranav.ingestion.mode:if-empty}") String ingestionMode) {
+                                         @Value("${askpranav.ingestion.mode:if-empty}") String ingestionMode,
+                                         JdbcTemplate jdbcTemplate,
+                                         @Value("${spring.ai.vectorstore.pgvector.table-name:vector_store}") String vectorTable) {
+        if (!vectorTable.matches("[A-Za-z0-9_]+")) {
+            throw new IllegalArgumentException("Unsafe vector store table name: " + vectorTable);
+        }
+        this.jdbcTemplate = jdbcTemplate;
+        this.vectorTable = vectorTable;
         this.summaryRepository = summaryRepository;
         this.experienceRepository = experienceRepository;
         this.educationRepository = educationRepository;
@@ -101,8 +112,18 @@ public class KnowledgeBaseIngestionRunner implements CommandLineRunner {
         }
 
         List<Document> chunks = new TokenTextSplitter().apply(documents);
-        vectorStore.add(chunks);
-        log.info("Ingested {} source documents as {} chunks into the vector store.", documents.size(), chunks.size());
+        try {
+            if ("always".equalsIgnoreCase(ingestionMode)) {
+                int removed = jdbcTemplate.update("DELETE FROM " + vectorTable);
+                log.info("Cleared {} existing chunks before re-ingesting.", removed);
+            }
+            vectorStore.add(chunks);
+            log.info("Ingested {} source documents as {} chunks into the vector store.", documents.size(), chunks.size());
+        } catch (RuntimeException e) {
+            // Typically the embedding API refusing (quota, outage). The site and its data endpoints do not
+            // need the vector store, so keep serving; a restart retries while the store is still empty.
+            log.error("Ingestion failed, so chat answers have less context until it succeeds: {}", e.getMessage());
+        }
     }
 
     private boolean vectorStoreLooksPopulated() {

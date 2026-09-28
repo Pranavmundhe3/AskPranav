@@ -83,6 +83,11 @@ reimplementing tool-calling itself.
 | `EMBEDDING_DIMENSIONS` | no (`768` default) | Must match the embedding model (768 for `gemini-embedding-001` as configured) |
 | `ASKPRANAV_RATE_LIMIT_MAX`, `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS` | no (`2`, `300`) | Per-IP limit on `POST /ask/question`: 2 questions per 5 minutes |
 | `ASKPRANAV_FORWARD_HEADERS` | no (`none`) | Set to `native` behind a reverse proxy so the limiter sees each visitor's real IP |
+| `ASKPRANAV_ADMIN_USER`, `ASKPRANAV_ADMIN_PASSWORD` | for writes | Login for the `POST .../save-*` endpoints. No default password: unset means all writes are rejected |
+| `ASKPRANAV_CONTACT_TO` | for the contact form | Address that receives contact-form messages (no default, the repo is public) |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | for the contact form | SMTP login; for Gmail use an App Password |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` | no | SMTP server (default `smtp.gmail.com:587`) and sender address (defaults to `MAIL_USERNAME`) |
+| `ASKPRANAV_GITHUB_REPOS` | no | Comma-separated repo (`owner/repo` or URL) or account (`https://github.com/owner`) entries; an account pulls all its public non-fork repos' READMEs |
 | `ASKPRANAV_GITHUB_REPOS` | no | comma-separated `owner/repo` slugs whose READMEs to ingest |
 | `ASKPRANAV_INGESTION_MODE` | no (`if-empty` default) | `if-empty` \| `always` |
 
@@ -124,28 +129,98 @@ To host the page on a different site, set `API_BASE` at the top of the file to t
 
 ### Angular client (`resume-client`)
 
-The portfolio site has an **Ask Pranav** entry in its top navigation, routed to `/ask`
-(`src/app/ask/`, `src/app/ask.service.ts`). It is the same chat as the static page above: suggestion
-chips, typing indicator, sources under each answer, and the backend's rate-limit / outage messages
-shown in the conversation. Answer text is rendered through Angular interpolation only (no
-`innerHTML`), so model output cannot inject markup. Also fixed: the empty route used to redirect to a
-non-existent `register` route; it now goes to `home`.
+The portfolio site (Angular 10) shows the resume data from the backend and has an **Ask Pranav** chat
+page. Pages and the endpoints they call (base URL = `askpranavApiUrl` in `src/environments/environment.ts`,
+`http://localhost:5000` for local runs):
+
+| Page | Route | Backend endpoint |
+|---|---|---|
+| Home | `/home` | `GET /summary/summary-details` |
+| Ask Pranav (chat) | `/ask` | `POST /ask/question` |
+| Skills | `/skills` | `GET /skill/skill-details` |
+| Work Experience (+ certifications) | `/experience` | `GET /experience/experience-details`, `GET /certification/certification-details` |
+| Projects | `/projects` | `GET /project/project-details` |
+| Publications | `/publications` | `GET /publication/publication-details` |
+| About Me (+ education) | `/about-me` | `GET /personal/personal-details`, `GET /education/education-details` |
+
+The UI shows the data, has the chat, and has a contact form (`POST /contact/send`, see below). It does
+not edit data: the backend's `POST /*/save-*` endpoints are for you (they need the admin login, see
+"Securing the write endpoints"), and the `GET /skill/skill-details/by-type` and
+`GET /experience/experience-details/by-company` filters are not used by any page.
+
+Experience descriptions are stored one bullet per line and rendered as a bullet list; the seed data
+follows the resume's bullets.
+
+**Running it locally (three terminals):**
 
 ```bash
-# terminal 1: the backend (see "Running locally")
-# terminal 2:
+# terminal 1 - backend on :5000 (Postgres container must be up: docker compose up -d postgres)
+set -a; source .env; set +a
+cd askpranav-service && ./mvnw spring-boot:run
+
+# terminal 2 - build the Angular client and keep rebuilding on every save
 cd resume-client
-npm install
-npx ng serve            # http://localhost:4200, talks to http://localhost:5000
+npm install --legacy-peer-deps      # once; the flag is needed because of an old ng-bootstrap peer range
+npm run build:watch
+
+# terminal 3 - serve the built client on :4200
+cd resume-client && npm run serve:dist
 ```
 
-The backend URL comes from `src/environments/environment.ts` (`askpranavApiUrl`). Before a production
-build, set it in `environment.prod.ts` to the deployed backend's public URL (it ships empty on purpose,
-so a forgotten value fails loudly instead of pointing at the wrong host), and set
-`ASKPRANAV_CORS_ALLOWED_ORIGIN` on the backend to the site's origin. The backend allows
-`http://localhost:4200` by default. Node.js is required for this part and was not available where this
-was written, so **the Angular code has not been compiled or run yet**; run `npx ng build` and
-`npx ng test` first (the new `ask.component.spec.ts` covers parsing, the request, and the 429 path).
+Open <http://localhost:4200>. **Why not `ng serve`?** Angular CLI 10's dev server crashes on Node 20+
+(`No such module: http_parser`), and building with webpack 4 on Node 17+ needs
+`--openssl-legacy-provider`; the `build:watch` script sets that flag and `serve:dist` is a tiny static
+server with router fallback (`serve-dist.js`). On Node 14/16 plain `npm start` (`ng serve`) should work
+as well, but that was not tried. Before a production build, set `askpranavApiUrl` in
+`environment.prod.ts` to the deployed backend URL and set `ASKPRANAV_CORS_ALLOWED_ORIGIN` on the
+backend to the site's origin (the backend allows `http://localhost:4200` by default).
+
+Answer text in the chat is rendered through Angular interpolation only (no `innerHTML`), so model
+output cannot inject markup. Verified locally in headless Chrome: all pages render backend data, the
+chat request reaches `POST /ask/question` with correct CORS, and rate-limit and outage messages appear in
+the conversation. A successful model answer was not seen because the Gemini quota was exhausted.
+
+### Securing the write endpoints
+
+Spring Security protects everything that changes data. Reads (`GET`), the chat, the contact form and the
+MCP message channel are public; **every other write needs the admin login** (HTTP Basic), including any
+endpoint added later (default-deny). CSRF protection is off because there is no cookie or session, only an
+`Authorization` header per request. With no `ASKPRANAV_ADMIN_PASSWORD` set, no account exists at all.
+
+Locally:
+
+```bash
+# 1. put a strong password in .env (the file is git-ignored)
+openssl rand -base64 24            # generate one, then add:  ASKPRANAV_ADMIN_PASSWORD=<that value>
+#                                    ASKPRANAV_ADMIN_USER=admin   (optional, "admin" is the default)
+
+# 2. restart the backend so it picks it up
+set -a; source .env; set +a; cd askpranav-service && ./mvnw spring-boot:run
+
+# 3. writes now need the login (401 without it)
+curl -u "$ASKPRANAV_ADMIN_USER:$ASKPRANAV_ADMIN_PASSWORD" -X POST localhost:5000/project/save-project \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New project","duration":"2026","shortDescription":"...","techStack":"..."}'
+```
+
+Saved rows appear on the site immediately, but the chat only learns them at the next ingestion
+(`ASKPRANAV_INGESTION_MODE=always` for one start, which now clears the old chunks first).
+To edit a row, POST it with its `id`. Over plain HTTP the password travels unencrypted, so put the
+backend behind HTTPS before using this beyond localhost. The tests in `SecurityConfigTest` cover 401 for
+no/wrong password, 201 for the admin, default-deny for other methods, and the browser preflight.
+
+### Contact form
+
+`POST /contact/send` (name, email, message) is public but limited to 3 messages per 10 minutes per IP, has
+a hidden honeypot field bots fill in, and strips line breaks from the name so it cannot inject mail
+headers. `ContactController` calls `ContactService`, which sends the mail with the visitor's address as
+`Reply-To`, so replying answers them directly.
+
+To receive mail, set `ASKPRANAV_CONTACT_TO` and an SMTP login in `.env`. For Gmail: enable 2-Step
+Verification, create an App Password (Google Account > Security > App passwords), and set
+`MAIL_USERNAME=<your gmail address>` and `MAIL_PASSWORD=<the app password>`. Until then the form answers
+"The message could not be sent right now." To try it without sending real mail, run any local SMTP sink
+and start the backend with `MAIL_HOST=127.0.0.1 MAIL_PORT=2525 MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false`.
 
 ### Rate limit
 
@@ -153,7 +228,7 @@ was written, so **the Angular code has not been compiled or run yet**; run `npx 
 question makes several Gemini calls and the URL is public. The 3rd question inside the window gets
 `429 Too Many Requests` with a `Retry-After` header, and the chat page shows the message. Tune it with
 `ASKPRANAV_RATE_LIMIT_MAX` / `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS`. Limits: counters live in memory
-(reset on restart, per instance), and the MCP endpoint (`/sse`) is not rate-limited or authenticated.
+(reset on restart, per instance), and the MCP endpoint (`/sse`) is read-only but not rate-limited or authenticated.
 Behind a reverse proxy, set `ASKPRANAV_FORWARD_HEADERS=native`, otherwise every visitor shares the
 proxy's IP and one person can lock everyone out.
 

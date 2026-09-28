@@ -22,9 +22,6 @@ public class Personal {
     @Column(name = "ID")
     private Long id;
 
-    @Column(name = "DOB")
-    private String dob;
-
     @Column(name = "HOBBIES")
     private String hobbies;
 

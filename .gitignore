@@ -32,3 +32,6 @@ resume-client/node_modules/
 resume-client/dist/
 resume-client/.angular/
 npm-debug.log
+
+### Resume site logs
+resume-client/*.log

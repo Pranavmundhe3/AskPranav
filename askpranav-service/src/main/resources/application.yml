@@ -14,6 +14,19 @@ spring:
     username: ${DB_USERNAME:askpranav}
     password: ${DB_PASSWORD}
 
+  mail:
+    # Contact form delivery. Defaults suit Gmail (use an App Password, not the account password).
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -59,9 +72,24 @@ askpranav:
     # always: re-embed every startup (dev). if-empty: only embed if the vector store looks empty (default).
     mode: ${ASKPRANAV_INGESTION_MODE:if-empty}
   knowledge:
-    # owner/repo slugs whose README.md should be ingested into the vector store, e.g. "Pranavmundhe3/AskPranav"
+    # Comma-separated GitHub sources whose README.md files are ingested. Each entry may be a repo
+    # ("Pranavmundhe3/AskPranav" or its URL) or an account URL ("https://github.com/Pranavmundhe3"),
+    # which pulls every public, non-fork repository of that account.
     github-repos: ${ASKPRANAV_GITHUB_REPOS:}
   rate-limit:
     # Per client IP, sliding window, applied to POST /ask/question. Every question costs several Gemini calls.
     max-requests: ${ASKPRANAV_RATE_LIMIT_MAX:2}
     window-seconds: ${ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS:300}
+  security:
+    # Login for the write endpoints (POST .../save-*). There is deliberately no default password: when
+    # ASKPRANAV_ADMIN_PASSWORD is unset, no admin account exists and every write is rejected.
+    admin-username: ${ASKPRANAV_ADMIN_USER:admin}
+    admin-password: ${ASKPRANAV_ADMIN_PASSWORD:}
+  contact:
+    # Where contact-form messages are delivered. No default: this repository is public.
+    to: ${ASKPRANAV_CONTACT_TO:}
+    # Sender address; most SMTP providers require it to be the authenticated account.
+    from: ${MAIL_FROM:${MAIL_USERNAME:}}
+    rate-limit:
+      max-requests: ${ASKPRANAV_CONTACT_RATE_LIMIT_MAX:3}
+      window-seconds: ${ASKPRANAV_CONTACT_RATE_LIMIT_WINDOW_SECONDS:600}

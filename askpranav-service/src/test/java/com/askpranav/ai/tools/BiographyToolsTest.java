@@ -86,7 +86,7 @@ class BiographyToolsTest {
 
     @Test
     void getContactInfoMapsPersonalFields() {
-        Personal personal = new Personal(1L, "1 January 2000", "Swimming", "English",
+        Personal personal = new Personal(1L, "Swimming", "English",
                 "pranav@example.com", "linkedin.com/in/pranav", "github.com/pranav", "pranav.dev");
         when(personalService.getPersonalDetails()).thenReturn(personal);
 
