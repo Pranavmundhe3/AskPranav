@@ -24,7 +24,10 @@
 
 .avatar img {
     display: block;
+    width: 150px;
     height: 150px;
+    object-fit: cover;
+    object-position: center 15%;
     overflow: hidden;
     border-radius: 50%;
 }
