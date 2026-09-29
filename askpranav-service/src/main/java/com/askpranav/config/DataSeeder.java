@@ -192,14 +192,14 @@ public class DataSeeder implements CommandLineRunner {
         if (summaryRepository.count() > 0) return;
         Summary summary = new Summary();
         summary.setSummaryDetails(
-                "Software Engineer with more than 6 years of experience designing and delivering backend "
-                        + "applications using Java, Spring Framework, Spring Boot, Microservices, and REST APIs "
+                "Java Developer/Fullstack Software Engineer with more than 6 years of experience designing and delivering backend "
+                        + "applications using Java, Spring, Spring Boot, Microservices, Angular and REST APIs "
                         + "across Telecom, Automotive, Payments/Fintech, Banking and Financial, and Maps/Navigation "
-                        + "domains. Experienced across the full software development lifecycle (SDLC), including "
-                        + "design, development, testing, deployment, production troubleshooting, and maintenance. "
+                        + "domains. Experienced across SAFe agile practices, including "
+                        + "end to end application lifecycle. "
                         + "Strong background in AWS, Docker, Kubernetes, CI/CD, and Agile development. Led a "
                         + "feature end-to-end and driven technical decisions while collaborating across "
-                        + "international teams. AWS Certified Cloud Practitioner; proficient in English (C1) and "
+                        + "international teams. AI-assisted development, AWS Certified Cloud Practitioner; proficient in English (C1) and "
                         + "German (A2).");
         summaryRepository.save(summary);
         log.info("Seeded Summary");
