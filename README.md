@@ -83,6 +83,7 @@ reimplementing tool-calling itself.
 | `ASKPRANAV_RATE_LIMIT_MAX`, `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS` | no (`2`, `300`) | Per-IP limit on `POST /ask/question`: 2 questions per 5 minutes |
 | `ASKPRANAV_FORWARD_HEADERS` | no (`none`) | Set to `native` behind a reverse proxy so the limiter sees each visitor's real IP |
 | `ASKPRANAV_ADMIN_USER`, `ASKPRANAV_ADMIN_PASSWORD` | for writes | Login for the `POST .../save-*` endpoints. No default password: unset means all writes are rejected |
+| `ASKPRANAV_MCP_USER`, `ASKPRANAV_MCP_PASSWORD` | for MCP | Login for `GET /sse` and `POST /mcp/message`. No default password: unset means those endpoints reject everyone (the admin account can still reach them) |
 | `ASKPRANAV_CONTACT_TO` | for the contact form | Address that receives contact-form messages (no default, the repo is public) |
 | `MAIL_USERNAME`, `MAIL_PASSWORD` | for the contact form | SMTP login; for Gmail use an App Password |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM` | no | SMTP server (default `smtp.gmail.com:587`) and sender address (defaults to `MAIL_USERNAME`) |
@@ -185,17 +186,21 @@ the conversation. A successful model answer was not seen because the Gemini quot
 
 ### Securing the write endpoints
 
-Spring Security protects everything that changes data. Reads (`GET`), the chat, the contact form and the
-MCP message channel are public; **every other write needs the admin login** (HTTP Basic), including any
-endpoint added later (default-deny). CSRF protection is off because there is no cookie or session, only an
-`Authorization` header per request. With no `ASKPRANAV_ADMIN_PASSWORD` set, no account exists at all.
+Spring Security protects everything that changes data or costs money to call. Reads (`GET`), the chat and
+the contact form are public; **every other write needs the admin login** (HTTP Basic), including any
+endpoint added later (default-deny); **the MCP endpoints (`GET /sse`, `POST /mcp/message`) need either the
+MCP or the admin login** - see "Connecting an MCP client" above. CSRF protection is off because there is
+no cookie or session, only an `Authorization` header per request. With no `ASKPRANAV_ADMIN_PASSWORD` /
+`ASKPRANAV_MCP_PASSWORD` set, that account does not exist at all.
 
 Locally:
 
 ```bash
-# 1. put a strong password in .env (the file is git-ignored)
+# 1. put strong passwords in .env (the file is git-ignored)
 openssl rand -base64 24            # generate one, then add:  ASKPRANAV_ADMIN_PASSWORD=<that value>
 #                                    ASKPRANAV_ADMIN_USER=admin   (optional, "admin" is the default)
+openssl rand -base64 24            # generate a second one:    ASKPRANAV_MCP_PASSWORD=<that value>
+#                                    ASKPRANAV_MCP_USER=mcp     (optional, "mcp" is the default)
 
 # 2. restart the backend so it picks it up
 set -a; source .env; set +a; cd askpranav-service && ./mvnw spring-boot:run
@@ -259,7 +264,8 @@ resume file rather than the rows if the file is meant to be the source of truth.
 question makes several Gemini calls and the URL is public. The 3rd question inside the window gets
 `429 Too Many Requests` with a `Retry-After` header, and the chat page shows the message. Tune it with
 `ASKPRANAV_RATE_LIMIT_MAX` / `ASKPRANAV_RATE_LIMIT_WINDOW_SECONDS`. Limits: counters live in memory
-(reset on restart, per instance), and the MCP endpoint (`/sse`) is read-only but not rate-limited or authenticated.
+(reset on restart, per instance). The MCP endpoint (`/sse`) is read-only and requires login (see "Connecting
+an MCP client"), but is not itself rate-limited - a logged-in MCP client can call tools as fast as it likes.
 Behind a reverse proxy, set `ASKPRANAV_FORWARD_HEADERS=native`, otherwise every visitor shares the
 proxy's IP and one person can lock everyone out.
 
@@ -270,19 +276,34 @@ With the app running, the MCP server speaks **SSE** (Spring AI's default transpo
 HTTP endpoint. It exposes 9 tools: `getCareerSummary`, `getExperience`, `getSkills`, `getEducation`,
 `getCertifications`, `getPublications`, `getProjectDetails`, `getContactInfo`, `matchJobDescription`.
 
-In any MCP-compatible client (an AI desktop app, an IDE assistant, a CLI agent), add a remote server of
-type **SSE** with the URL above. Clients that only launch local (stdio) servers can go through the
-generic `mcp-remote` bridge instead; the config entry looks like this:
+**The MCP endpoints require login** (`ASKPRANAV_MCP_USER` / `ASKPRANAV_MCP_PASSWORD`, HTTP Basic - the
+admin account also works). With no `ASKPRANAV_MCP_PASSWORD` set, no MCP account exists and every request
+to `/sse` or `/mcp/message` is rejected (401), even a legitimate one. This is the same no-default-password
+design as the admin login - see "Securing the write endpoints".
+
+Claude Code:
+
+```bash
+claude mcp add --transport sse askpranav http://localhost:5000/sse \
+  --header "Authorization: Basic $(printf '%s:%s' "$ASKPRANAV_MCP_USER" "$ASKPRANAV_MCP_PASSWORD" | base64 -w0)"
+```
+
+Clients that only launch local (stdio) servers can go through the generic `mcp-remote` bridge instead,
+which reads the same two env vars into an `Authorization` header:
 
 ```json
-{ "mcpServers": { "askpranav": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:5000/sse"] } } }
+{ "mcpServers": { "askpranav": {
+  "command": "npx",
+  "args": ["-y", "mcp-remote", "http://localhost:5000/sse", "--header", "Authorization:${AUTH_HEADER}"],
+  "env": { "AUTH_HEADER": "Basic <base64 of user:password, computed the same way as above>" }
+} } }
 ```
 
 Then ask your assistant things like "using the AskPranav tools, what are Pranav's certifications?" or
 paste a job description and ask it to run `matchJobDescription`. The handshake, tool listing,
-`getCertifications` and `matchJobDescription` were verified against a running instance over raw
-JSON-RPC; the `mcp-remote` entry has not been tried yet. The endpoint is unauthenticated, so
-only expose it beyond localhost behind something that adds auth.
+`getCertifications`, `matchJobDescription`, and the login itself (no/wrong/right credentials, on both the
+MCP and the admin account) were verified against a running instance; the `mcp-remote` entry has not been
+tried yet.
 
 ## Build & test (no API cost)
 

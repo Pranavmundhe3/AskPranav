@@ -95,6 +95,12 @@ askpranav:
     # ASKPRANAV_ADMIN_PASSWORD is unset, no admin account exists and every write is rejected.
     admin-username: ${ASKPRANAV_ADMIN_USER:admin}
     admin-password: ${ASKPRANAV_ADMIN_PASSWORD:}
+    # Login for the MCP endpoints (GET /sse, POST /mcp/message) - separate from the admin account since
+    # an MCP client only needs read access to the @Tool methods, not the write endpoints. Same no-default
+    # rule: unset ASKPRANAV_MCP_PASSWORD means no MCP account exists and those endpoints reject everyone
+    # (the admin account can still reach them).
+    mcp-username: ${ASKPRANAV_MCP_USER:mcp}
+    mcp-password: ${ASKPRANAV_MCP_PASSWORD:}
   contact:
     # Where contact-form messages are delivered. No default: this repository is public.
     to: ${ASKPRANAV_CONTACT_TO:}
