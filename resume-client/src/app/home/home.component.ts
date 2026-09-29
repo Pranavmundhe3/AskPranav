@@ -1,7 +1,9 @@
 import { BiographyServiceService } from './../biography-service.service';
 import { Summary } from './../entity/Summary';
+import { Experience } from './../entity/Experience';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { logoForCompany } from './../shared/company-logos';
 
 /** A run of summary text; `hl` marks a key term that is visually highlighted. */
 export interface SummaryPart {
@@ -28,11 +30,16 @@ export class HomeComponent implements OnInit {
   sentences: SummaryPart[][] = [];
   error = false;
 
+  /** Most recent role (backend lists experience oldest-first by id, so the first one is current/latest). */
+  currentRole: Experience;
+  currentRoleLogo: string;
+
   constructor(private biographyServiceService: BiographyServiceService,
     private router: Router) { }
 
   ngOnInit(): void {
     this.getSummaryDetails();
+    this.getCurrentRole();
   }
 
   routeToContactMe() {
@@ -50,6 +57,16 @@ export class HomeComponent implements OnInit {
         this.sentences = this.toSentences(data && data.summaryDetails);
       },
       () => this.error = true
+    );
+  }
+
+  getCurrentRole() {
+    this.biographyServiceService.getExperienceDetails().subscribe(
+      (data) => {
+        this.currentRole = data && data.length > 0 ? data[0] : null;
+        this.currentRoleLogo = this.currentRole ? logoForCompany(this.currentRole.company) : null;
+      },
+      () => { /* the summary card still renders fine without a headline */ }
     );
   }
 

@@ -16,7 +16,6 @@ import { PublicationsComponent } from './publications/publications.component';
 import { AnimatedTextComponent } from './shared/animated-text/animated-text.component';
 import { HttpClientModule } from '@angular/common/http';
 import { BiographyServiceService } from './biography-service.service';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MatDividerModule} from '@angular/material/divider';
@@ -41,7 +40,6 @@ import {MatIconModule} from '@angular/material/icon';
     AppRoutingModule,
     FormsModule,
     HttpClientModule,
-    MatExpansionModule,
     BrowserAnimationsModule,
     MatButtonModule,
     MatDividerModule,

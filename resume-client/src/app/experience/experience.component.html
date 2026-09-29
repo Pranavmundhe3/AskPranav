@@ -5,12 +5,11 @@
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
         <mat-icon class="pos">work</mat-icon>
         <h2 class="pos">Work Profile</h2>
-        <h3 class="pos">{{exp.position}}</h3>
-        <h4 class="pos">{{exp.location}}</h4>
+        <h3 class="pos position">{{exp.position}}</h3>
         <p class="pos company-line">
           <img *ngIf="logoFor(exp.company)" [src]="logoFor(exp.company)" class="company-logo"
                [alt]="exp.company + ' logo'">
-          <span>{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span></span>
+          <span>{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span><span *ngIf="exp.location"> · {{exp.location}}</span></span>
         </p>
         <p class="pos">{{exp.year}}</p>
         <ul class="bullets">
@@ -26,10 +25,14 @@
     <section class="w3-container w3-center w3-content" style="max-width:3000px">
       <mat-icon class="pos">analytics</mat-icon>
       <h2 class="pos">Certifications</h2>
-      <li *ngFor="let item of certDetails; let i = index" class="fade-in-up" [style.animation-delay.ms]="i * 120">
-        <p class="pos">{{item.name}}</p>
-        <p class="pos">{{item.completedOn}}</p>
-     </li>
+      <div class="cert-grid">
+        <div class="cert-badge fade-in-up" *ngFor="let item of certDetails; let i = index"
+             [style.animation-delay.ms]="i * 120">
+          <mat-icon class="cert-icon">military_tech</mat-icon>
+          <p class="cert-name">{{item.name}}</p>
+          <p class="cert-date" *ngIf="item.completedOn">{{item.completedOn}}</p>
+        </div>
+      </div>
     </section>
   </div>
 </div>

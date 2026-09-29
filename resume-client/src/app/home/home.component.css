@@ -45,6 +45,34 @@
     animation: shimmer 6s linear infinite;
 }
 
+/* LinkedIn-style headline: logo + "Position at Company" under the name */
+.headline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    color: #444c56;
+    font-size: 15px;
+    opacity: 0;
+    animation: headline-in 0.6s ease-out 0.25s forwards;
+}
+
+.headline-logo {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #ffffff;
+    padding: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes headline-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
 /* Summary: one sentence at a time, sliding up with an accent bar */
 .summary {
     max-width: 760px;
@@ -119,9 +147,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .hero, .avatar, .name, .line, .hl {
+    .hero, .avatar, .name, .line, .hl, .headline {
         animation: none;
     }
+    .headline { opacity: 1; }
     .line { opacity: 1; transform: none; }
     .hl { background-size: 100% 45%; }
 }

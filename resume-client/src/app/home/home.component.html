@@ -6,6 +6,11 @@
       </div>
       <h2 class="name">Pranav Dharmaraj Mundhe</h2>
 
+      <div class="headline" *ngIf="currentRole">
+        <img *ngIf="currentRoleLogo" [src]="currentRoleLogo" class="headline-logo" [alt]="currentRole.company + ' logo'">
+        <span><strong>{{ currentRole.position }}</strong> at {{ currentRole.company }}</span>
+      </div>
+
       <div class="summary" *ngIf="sentences.length > 0">
         <p class="line" *ngFor="let parts of sentences; let i = index" [style.animation-delay.ms]="500 + i * 450">
           <span *ngFor="let part of parts" [class.hl]="part.hl"

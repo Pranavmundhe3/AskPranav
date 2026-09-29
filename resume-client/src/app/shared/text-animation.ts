@@ -31,9 +31,27 @@ export function toSentences(text: string, keywords: string[]): TextPart[][] {
     .map(part => ({ text: part, hl: terms.indexOf(part) >= 0 })));
 }
 
-/** Splits a comma-separated field (tech stack, technologies) into trimmed, non-empty terms. */
+/**
+ * Splits a comma-separated field (tech stack, technologies, skills) into trimmed, non-empty terms.
+ * Parenthesis-aware: a comma inside "AWS (EC2, ECS, ...)" does not split that entry apart, so the
+ * whole parenthetical stays as one term instead of breaking into "AWS (EC2" / "ECS" / "...)".
+ */
 export function splitCsv(value: string): string[] {
-  return (value || '').split(',').map(v => v.trim()).filter(v => v.length > 0);
+  const terms: string[] = [];
+  let depth = 0;
+  let current = '';
+  for (const ch of (value || '')) {
+    if (ch === '(') { depth++; }
+    if (ch === ')') { depth = Math.max(0, depth - 1); }
+    if (ch === ',' && depth === 0) {
+      terms.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  terms.push(current.trim());
+  return terms.filter(t => t.length > 0);
 }
 
 function splitIntoSentences(text: string): string[] {

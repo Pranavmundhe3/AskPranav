@@ -1,27 +1,94 @@
 .center {
     margin: auto;
-    width: 80%;
+    width: 90%;
+    max-width: 1100px;
     padding: 10px;
 }
 
-img {
-    height: 100px;
-    circle: 100px;
-    overflow: hidden;
-    border-radius: 50%;
+.page-title {
+    text-align: center;
+    margin-bottom: 4px;
 }
 
-.pos {
-    text-align: left;   
+.error-line {
+    text-align: center;
 }
 
-.card {
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    padding: 16px;
+/* Square-ish cards in a responsive grid, instead of a tall stack of expansion panels - much less
+   scrolling than the previous one-per-row accordion layout. */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+    margin-top: 16px;
+}
+
+.skill-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
     background-color: #f1f1f1;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    padding: 20px 16px;
+    min-height: 210px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-/* Category names in the panel headers */
+
+.skill-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 22px 0 rgba(0, 0, 0, 0.2);
+}
+
+.cat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: #1976d2;
+    transition: transform 0.25s ease;
+}
+
+.skill-card:hover .cat-icon {
+    transform: scale(1.15) rotate(-6deg);
+}
+
 .category {
+    margin: 10px 0 12px;
     font-weight: 700;
+    font-size: 16px;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.chips li {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #c9d3e3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #1976d2;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.chips li:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: #1976d2;
+    color: #ffffff;
+    border-color: #1976d2;
+}
+
+@media (max-width: 520px) {
+    .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .skill-card { min-height: 180px; padding: 14px 10px; }
 }

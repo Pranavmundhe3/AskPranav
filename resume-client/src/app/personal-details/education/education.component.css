@@ -1,26 +1,22 @@
 .center {
     margin: auto;
-    width: 80%;
+    width: 90%;
+    max-width: 1100px;
     padding: 10px;
 }
 
-
 .pos {
-    text-align: left;   
-}
-
-img {
-    height: 100px;
-    circle: 100px;
-    overflow: hidden;
-    border-radius: 50%;
+    text-align: left;
 }
 
 .card {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-    padding: 16px;
+    border-radius: 10px;
+    padding: 20px 18px;
     text-align: center;
     background-color: #f1f1f1;
+    max-width: 420px;
+    margin: 0 auto;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
