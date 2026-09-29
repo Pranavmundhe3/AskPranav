@@ -1,6 +1,6 @@
 <p class="center" *ngIf="error">Could not load education from the backend.</p>
 
-<div class="center" *ngFor="let edu of eduDetails">
+<div class="center fade-in-up" *ngFor="let edu of eduDetails; let i = index" [style.animation-delay.ms]="i * 150">
     <div class="card">
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
 

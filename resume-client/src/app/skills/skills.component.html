@@ -6,7 +6,7 @@
       <p>Following Are My Skills</p>
       <p *ngIf="error">Could not load skills from the backend.</p>
 
-      <div *ngFor="let skill of skills">
+      <div *ngFor="let skill of skills; let i = index" class="fade-in-up" [style.animation-delay.ms]="i * 120">
         <mat-expansion-panel [expanded]="true">
           <mat-expansion-panel-header>
             <mat-panel-title class="category">

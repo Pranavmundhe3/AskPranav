@@ -1,6 +1,6 @@
 <p class="center" *ngIf="error">Could not load data from the backend.</p>
 
-<div class="center" *ngFor="let exp of expDetails">
+<div class="center fade-in-up" *ngFor="let exp of expDetails; let i = index" [style.animation-delay.ms]="i * 150">
     <div class="card">
       <section class="w3-container w3-center w3-content" style="max-width:3000px">
         <mat-icon class="pos">work</mat-icon>
@@ -21,7 +21,7 @@
     <section class="w3-container w3-center w3-content" style="max-width:3000px">
       <mat-icon class="pos">analytics</mat-icon>
       <h2 class="pos">Certifications</h2>
-      <li *ngFor="let item of certDetails;">
+      <li *ngFor="let item of certDetails; let i = index" class="fade-in-up" [style.animation-delay.ms]="i * 120">
         <p class="pos">{{item.name}}</p>
         <p class="pos">{{item.completedOn}}</p>
      </li>
