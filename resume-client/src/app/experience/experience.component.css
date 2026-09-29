@@ -23,11 +23,44 @@ img {
 }
 .bullets {
     margin: 4px 0 0;
-    padding-left: 22px;
+    padding-left: 4px;
     text-align: left;
+    list-style: none;
 }
 
 .bullets li {
-    margin-bottom: 8px;
+    position: relative;
+    margin-bottom: 10px;
+    padding: 8px 10px 8px 26px;
     line-height: 1.5;
+    border-radius: 0 6px 6px 0;
+    border-left: 3px solid #1976d2;
+    background: rgba(25, 118, 210, 0.05);
+    transition: background-color 0.2s ease, transform 0.2s ease, border-left-color 0.2s ease;
+}
+
+.bullets li:nth-child(even) {
+    border-left-color: #04aa6d;
+}
+
+/* A small dot standing in for the bullet marker, since list-style is off to make room for the accent bar. */
+.bullets li::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 16px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: inherit;
+    background-color: #1976d2;
+}
+
+.bullets li:nth-child(even)::before {
+    background-color: #04aa6d;
+}
+
+.bullets li:hover {
+    background: rgba(25, 118, 210, 0.12);
+    transform: translateX(4px);
 }

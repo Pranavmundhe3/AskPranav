@@ -20,4 +20,9 @@ export class ProjectsComponent implements OnInit {
       () => this.error = true
     );
   }
+
+  /** The backend stores tech stack as one comma-separated string; shown here as separate chips. */
+  techsOf(techStack: string): string[] {
+    return (techStack || '').split(',').map(t => t.trim()).filter(t => t.length > 0);
+  }
 }

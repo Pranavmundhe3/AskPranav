@@ -14,3 +14,30 @@
     text-align: center;
     background-color: #f1f1f1;
 }
+
+.tech-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tech-chips li {
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #c9d3e3;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-size: 13px;
+    font-weight: 500;
+    color: #1976d2;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tech-chips li:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}

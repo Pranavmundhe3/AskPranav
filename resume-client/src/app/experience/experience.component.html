@@ -10,7 +10,8 @@
         <p class="pos">{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span></p>
         <p class="pos">{{exp.year}}</p>
         <ul class="bullets">
-          <li *ngFor="let point of bulletsOf(exp.description)">{{ point }}</li>
+          <li *ngFor="let point of bulletsOf(exp.description); let bi = index" class="fade-in-up"
+              [style.animation-delay.ms]="i * 150 + 250 + bi * 130">{{ point }}</li>
         </ul>
       </section>
     </div>

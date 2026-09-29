@@ -18,6 +18,7 @@ import com.askpranav.repository.SkillRepository;
 import com.askpranav.repository.SummaryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,22 @@ import org.springframework.stereotype.Component;
  * Seeds Pranav's real bio/career data, sourced from his resume
  * ({@code src/main/resources/knowledge/Lebenslauf-Pranav-Lead-Java-Dev.docx}) rather than the
  * original Biography-service SQL inserts, which had gone stale (single job, no publications).
- * Idempotent: skips a table that's already populated, so re-running the app doesn't duplicate rows.
+ * Idempotent by default: skips a table that's already populated, so re-running the app doesn't
+ * duplicate rows.
+ *
+ * <p><b>This means editing the text below does nothing to the live site on its own</b> - once a table
+ * has rows (after the very first run), every {@code seedX()} method sees {@code count() > 0} and
+ * returns without touching it, so the database keeps whatever was seeded the first time forever. To
+ * make an edit here take effect, restart once with {@code ASKPRANAV_RESEED=true}: that clears every
+ * table this class owns (personal, education, experience, skills, certifications, summary,
+ * publications) before reseeding from this file, so the database ends up matching it exactly. This is
+ * destructive: it deletes every row in those tables regardless of how it got there, so it also erases
+ * anything added since via the admin-protected save endpoints or a resume import, not just what this
+ * class itself inserted.
+ * <b>Projects are the one exception</b> - never cleared, only added/updated by name - because a
+ * project (like this application) can exist without being on the resume; delete one yourself via the
+ * (admin-protected) API if you no longer want it. Turn the flag back off afterwards, or every restart
+ * pays the reset cost and briefly serves an empty site while it reseeds.
  *
  * Runs before {@link com.askpranav.ai.ingestion.KnowledgeBaseIngestionRunner} (@Order ensures this).
  */
@@ -44,11 +60,13 @@ public class DataSeeder implements CommandLineRunner {
     private final SummaryRepository summaryRepository;
     private final ProjectRepository projectRepository;
     private final PublicationRepository publicationRepository;
+    private final boolean reseed;
 
     public DataSeeder(PersonalRepository personalRepository, EducationRepository educationRepository,
                        ExperienceRepository experienceRepository, SkillRepository skillRepository,
                        CertificationRepository certificationRepository, SummaryRepository summaryRepository,
-                       ProjectRepository projectRepository, PublicationRepository publicationRepository) {
+                       ProjectRepository projectRepository, PublicationRepository publicationRepository,
+                       @Value("${askpranav.reseed:false}") boolean reseed) {
         this.personalRepository = personalRepository;
         this.educationRepository = educationRepository;
         this.experienceRepository = experienceRepository;
@@ -57,10 +75,22 @@ public class DataSeeder implements CommandLineRunner {
         this.summaryRepository = summaryRepository;
         this.projectRepository = projectRepository;
         this.publicationRepository = publicationRepository;
+        this.reseed = reseed;
     }
 
     @Override
     public void run(String... args) {
+        if (reseed) {
+            log.warn("ASKPRANAV_RESEED=true: clearing personal, education, experience, skills, certifications, "
+                    + "summary and publications before reseeding (projects are never cleared this way).");
+            publicationRepository.deleteAllInBatch();
+            summaryRepository.deleteAllInBatch();
+            certificationRepository.deleteAllInBatch();
+            skillRepository.deleteAllInBatch();
+            experienceRepository.deleteAllInBatch();
+            educationRepository.deleteAllInBatch();
+            personalRepository.deleteAllInBatch();
+        }
         seedPersonal();
         seedEducation();
         seedExperience();
@@ -207,7 +237,7 @@ public class DataSeeder implements CommandLineRunner {
 
     /** Each project is added only if no project with that name exists, so a new one can be introduced later. */
     private void seedProjects() {
-        seedProjectIfMissing(
+        seedOrUpdateProject(
                 "AskPranav - AI Career Agent",
                 "Sep 2026 - Present",
                 "Built an AI agent that answers recruiter questions about my career, grounded in my real resume, "
@@ -222,7 +252,7 @@ public class DataSeeder implements CommandLineRunner {
         // own, unrelated to this application's dependencies). The resume leaves the scraping framework
         // and vector DB as unfilled placeholders - carried over verbatim rather than guessed; fill these
         // in (or via POST /project/save-project) once decided.
-        seedProjectIfMissing(
+        seedOrUpdateProject(
                 "AI-Powered Job Search Agent",
                 "2026 - Present",
                 "Built an autonomous job-search agent in Python using Claude Code as the development "
@@ -233,19 +263,23 @@ public class DataSeeder implements CommandLineRunner {
                 null);
     }
 
-    private void seedProjectIfMissing(String name, String duration, String description, String techStack,
-                                      String githubUrl) {
-        if (projectRepository.findFirstByNameContainingIgnoreCase(name).isPresent()) return;
-        Project project = new Project();
+    /**
+     * Unlike the other seedX() methods, this one always syncs - matched by name, update in place if
+     * found, insert if not - regardless of the {@code reseed} flag, so an edit to either of the two
+     * named projects below always takes effect on the next restart. Any other project (added through
+     * the API, by a resume import, or by hand) is left alone: this only ever touches rows whose name
+     * matches one it was called with.
+     */
+    private void seedOrUpdateProject(String name, String duration, String description, String techStack,
+                                     String githubUrl) {
+        Project project = projectRepository.findFirstByNameContainingIgnoreCase(name).orElseGet(Project::new);
         project.setName(name);
         project.setDuration(duration);
         project.setShortDescription(description);
         project.setTechStack(techStack);
         project.setGithubUrl(githubUrl);
-        project.setLiveUrl(null);
-        project.setReadmeExcerpt(null);
         projectRepository.save(project);
-        log.info("Seeded Project ({})", name);
+        log.info("Synced Project ({})", name);
     }
 
     /** Joins bullet points into the stored form: one point per line. */

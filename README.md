@@ -90,6 +90,7 @@ reimplementing tool-calling itself.
 | `ASKPRANAV_GITHUB_REPOS` | no | Comma-separated repo (`owner/repo` or URL) or account (`https://github.com/owner`) entries; an account pulls all its public non-fork repos' READMEs |
 | `ASKPRANAV_GITHUB_REPOS` | no | comma-separated `owner/repo` slugs whose READMEs to ingest |
 | `ASKPRANAV_INGESTION_MODE` | no (`if-empty` default) | `if-empty` \| `always` |
+| `ASKPRANAV_RESEED` | no (`false` default) | `true` clears and reseeds the DataSeeder-owned tables from `DataSeeder.java` on that startup - see "Editing the seeded content" |
 | `ASKPRANAV_KNOWLEDGE_DIR` | no (`src/main/resources/knowledge`) | Folder that is watched while the app runs |
 | `ASKPRANAV_KNOWLEDGE_SCAN_MS` | no (`10000`) | How often the folder is checked |
 
@@ -229,6 +230,26 @@ Verification, create an App Password (Google Account > Security > App passwords)
 `MAIL_USERNAME=<your gmail address>` and `MAIL_PASSWORD=<the app password>`. Until then the form answers
 "The message could not be sent right now." To try it without sending real mail, run any local SMTP sink
 and start the backend with `MAIL_HOST=127.0.0.1 MAIL_PORT=2525 MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false`.
+
+### Editing the seeded content
+
+`DataSeeder.java` is write-once by default: it only inserts into a table that is still empty. **Editing
+the text there does nothing to the live site by itself** once those tables already have rows (they do,
+after the very first run) - each `seedX()` method sees existing rows and returns without touching them.
+
+To make an edit take effect: restart once with `ASKPRANAV_RESEED=true`. That clears personal, education,
+experience, skills, certifications, summary and publications, then reseeds all of them from the current
+`DataSeeder.java`. **Projects are never cleared this way** - a project (like this application) can exist
+without being on the resume - but the two projects DataSeeder names are still kept in sync by name on
+every restart, `ASKPRANAV_RESEED` or not, so editing their text always takes effect. Turn the flag back
+off after that one restart, or every future restart pays the reset cost and briefly serves an empty site
+while it reseeds.
+
+**This is destructive, not additive**: it deletes every row in those seven tables, whatever put it
+there - a `POST /*/save-*` edit through the admin login, or a resume import (see "Watching the knowledge
+folder") - and replaces all of it with exactly what `DataSeeder.java` seeds. Use it to intentionally
+reset back to the code, not casually; it is not a safe no-op when the database also holds newer content
+from an import or a manual edit.
 
 ### Watching the knowledge folder
 
