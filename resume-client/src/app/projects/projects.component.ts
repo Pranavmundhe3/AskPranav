@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { BiographyServiceService } from './../biography-service.service';
 import { Project } from './../entity/Project';
+import { splitCsv } from './../shared/text-animation';
 
 @Component({
   selector: 'app-projects',
@@ -23,6 +24,6 @@ export class ProjectsComponent implements OnInit {
 
   /** The backend stores tech stack as one comma-separated string; shown here as separate chips. */
   techsOf(techStack: string): string[] {
-    return (techStack || '').split(',').map(t => t.trim()).filter(t => t.length > 0);
+    return splitCsv(techStack);
   }
 }

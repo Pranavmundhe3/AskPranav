@@ -6,7 +6,8 @@
       <mat-icon class="pos">build</mat-icon>
       <h2 class="pos fade-in-up" [style.animation-delay.ms]="i * 150 + 80">{{ project.name }}</h2>
       <h4 class="pos fade-in-up" *ngIf="project.duration" [style.animation-delay.ms]="i * 150 + 140">{{ project.duration }}</h4>
-      <p class="pos fade-in-up" [style.animation-delay.ms]="i * 150 + 200">{{ project.shortDescription }}</p>
+      <app-animated-text [text]="project.shortDescription" [keywords]="techsOf(project.techStack)"
+                         [baseDelayMs]="i * 150 + 200"></app-animated-text>
       <ul class="tech-chips" *ngIf="project.techStack">
         <li *ngFor="let tech of techsOf(project.techStack); let ti = index" class="fade-in-up"
             [style.animation-delay.ms]="i * 150 + 300 + ti * 80">{{ tech }}</li>

@@ -13,6 +13,7 @@ import { ContactMeComponent } from './contact-me/contact-me.component';
 import { AskComponent } from './ask/ask.component';
 import { ProjectsComponent } from './projects/projects.component';
 import { PublicationsComponent } from './publications/publications.component';
+import { AnimatedTextComponent } from './shared/animated-text/animated-text.component';
 import { HttpClientModule } from '@angular/common/http';
 import { BiographyServiceService } from './biography-service.service';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -32,7 +33,8 @@ import {MatIconModule} from '@angular/material/icon';
     ContactMeComponent,
     AskComponent,
     ProjectsComponent,
-    PublicationsComponent
+    PublicationsComponent,
+    AnimatedTextComponent
   ],
   imports: [
     BrowserModule,

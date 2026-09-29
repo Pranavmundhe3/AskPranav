@@ -20,7 +20,56 @@ img {
     padding: 16px;
     text-align: center;
     background-color: #f1f1f1;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.18);
+}
+
+.pos.mat-icon, mat-icon.pos {
+    transition: transform 0.25s ease;
+}
+
+.card:hover .pos.mat-icon,
+.card:hover mat-icon.pos {
+    transform: scale(1.15) rotate(-6deg);
+}
+
+.company-line {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.company-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #ffffff;
+    padding: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    animation: logo-pop 0.5s ease-out both;
+    animation-delay: 0.3s;
+    transition: transform 0.2s ease;
+}
+
+.company-logo:hover {
+    transform: scale(1.15) rotate(-4deg);
+}
+
+@keyframes logo-pop {
+    from { opacity: 0; transform: scale(0.4) rotate(-15deg); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .company-logo { animation: none; }
+}
+
 .bullets {
     margin: 4px 0 0;
     padding-left: 4px;

@@ -21,7 +21,23 @@ img {
     padding: 16px;
     text-align: center;
     background-color: #f1f1f1;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.18);
+}
+
+.card:hover .pos.mat-icon,
+.card:hover mat-icon.pos {
+    transform: scale(1.15) rotate(-6deg);
+}
+
+.pos.mat-icon, mat-icon.pos {
+    transition: transform 0.25s ease;
+}
+
 /* Hobbies shown as pill-shaped tags */
 .chips {
     display: flex;
@@ -40,4 +56,36 @@ img {
     border: 1px solid #c9d3e3;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     font-weight: 500;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.chips li:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(25, 118, 210, 0.25);
+    background: #1976d2;
+    color: #ffffff;
+    border-color: #1976d2;
+}
+
+/* Links: a sweeping underline on hover, matching the top nav's treatment */
+.card a {
+    position: relative;
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.card a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: -2px;
+    height: 2px;
+    background: currentColor;
+    transition: right 0.25s ease;
+}
+
+.card a:hover::after {
+    right: 0;
 }

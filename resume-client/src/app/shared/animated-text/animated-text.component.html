@@ -1,0 +1,7 @@
+<div class="animated-text">
+  <p class="line" *ngFor="let parts of sentences; let i = index"
+     [style.animation-delay.ms]="baseDelayMs + i * stepMs">
+    <span *ngFor="let part of parts" [class.hl]="part.hl"
+          [style.animation-delay.ms]="part.hl ? baseDelayMs + i * stepMs + 350 : null">{{ part.text }}</span>
+  </p>
+</div>

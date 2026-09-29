@@ -7,7 +7,11 @@
         <h2 class="pos">Work Profile</h2>
         <h3 class="pos">{{exp.position}}</h3>
         <h4 class="pos">{{exp.location}}</h4>
-        <p class="pos">{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span></p>
+        <p class="pos company-line">
+          <img *ngIf="logoFor(exp.company)" [src]="logoFor(exp.company)" class="company-logo"
+               [alt]="exp.company + ' logo'">
+          <span>{{exp.company}}<span *ngIf="exp.client"> - {{exp.client}}</span></span>
+        </p>
         <p class="pos">{{exp.year}}</p>
         <ul class="bullets">
           <li *ngFor="let point of bulletsOf(exp.description); let bi = index" class="fade-in-up"

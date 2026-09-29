@@ -4,11 +4,18 @@
   <div class="card">
     <section class="w3-container w3-center w3-content" style="max-width:3000px">
       <mat-icon class="pos">menu_book</mat-icon>
-      <h2 class="pos">{{ pub.title }}</h2>
-      <h4 class="pos">{{ pub.venue }}<span *ngIf="pub.publishedOn"> - {{ pub.publishedOn }}</span></h4>
-      <p class="pos">{{ pub.description }}</p>
-      <p class="pos" *ngIf="pub.technologies"><strong>Technologies:</strong> {{ pub.technologies }}</p>
-      <p class="pos" *ngIf="pub.url"><a [href]="pub.url" target="_blank" rel="noopener">Read publication</a></p>
+      <h2 class="pos fade-in-up" [style.animation-delay.ms]="i * 150 + 80">{{ pub.title }}</h2>
+      <h4 class="pos fade-in-up" [style.animation-delay.ms]="i * 150 + 140">{{ pub.venue }}<span *ngIf="pub.publishedOn"> - {{ pub.publishedOn }}</span></h4>
+      <app-animated-text [text]="pub.description" [keywords]="techsOf(pub.technologies)"
+                         [baseDelayMs]="i * 150 + 200"></app-animated-text>
+      <ul class="tech-chips" *ngIf="pub.technologies">
+        <li *ngFor="let tech of techsOf(pub.technologies); let ti = index" class="fade-in-up"
+            [style.animation-delay.ms]="i * 150 + 300 + ti * 80">{{ tech }}</li>
+      </ul>
+      <p class="pos fade-in-up" *ngIf="pub.url"
+         [style.animation-delay.ms]="i * 150 + 400 + techsOf(pub.technologies).length * 80">
+        <a [href]="pub.url" target="_blank" rel="noopener">Read publication</a>
+      </p>
     </section>
   </div>
 </div>
